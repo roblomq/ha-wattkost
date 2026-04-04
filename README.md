@@ -35,10 +35,10 @@ Een nauwkeurige energiekostenberekening voor Nederlandse energiecontracten, voll
 
 ## Handmatige installatie
 
-Kopieer de map `custom_components/ha_wattkost` naar jouw HA config-directory:
+Kopieer de map `custom_components/wattkost` naar jouw HA config-directory:
 
 ```
-/config/custom_components/ha_wattkost/
+/config/custom_components/wattkost/
 ```
 
 Herstart Home Assistant en voeg de integratie toe via de UI.

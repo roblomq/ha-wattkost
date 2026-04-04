@@ -1,6 +1,6 @@
 """Constants for the NL Energy Cost integration."""
 
-DOMAIN = "nl_energy_cost"
+DOMAIN = "wattkost"
 PLATFORMS = ["sensor"]
 
 # Config entry keys - Electricity sensors

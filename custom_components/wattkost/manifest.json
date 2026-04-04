@@ -1,5 +1,5 @@
 {
-  "domain": "nl_energy_cost",
+  "domain": "wattkost",
   "name": "WattKost",
   "version": "1.1.0",
   "config_flow": true,
