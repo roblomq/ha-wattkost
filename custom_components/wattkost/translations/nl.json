@@ -45,7 +45,7 @@
         "data": {
           "fixed_delivery_day_electricity": "Vaste leveringskosten stroom €/dag",
           "system_operator_day_electricity": "Systeembeheerkosten stroom €/dag",
-          "energy_reduction_year": "Vermindering energiebelasting €/jaar",
+          "energy_reduction_year": "Vermindering energiebelasting €/dag",
           "gas_tariff": "Gastarief €/m³",
           "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
           "system_operator_day_gas": "Systeembeheerkosten gas €/dag"
@@ -71,7 +71,7 @@
         "data": {
           "fixed_delivery_day_electricity": "Vaste leveringskosten stroom €/dag",
           "system_operator_day_electricity": "Systeembeheerkosten stroom €/dag",
-          "energy_reduction_year": "Vermindering energiebelasting €/jaar",
+          "energy_reduction_year": "Vermindering energiebelasting €/dag",
           "gas_tariff": "Gastarief €/m³",
           "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
           "system_operator_day_gas": "Systeembeheerkosten gas €/dag"

@@ -55,7 +55,7 @@ from .const import (
     DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
-    DEFAULT_ENERGY_REDUCTION_YEAR,
+    DEFAULT_ENERGY_REDUCTION_DAY,
     DEFAULT_GAS_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_GAS,
     DEFAULT_SYSTEM_OPERATOR_DAY_GAS,
@@ -311,8 +311,7 @@ class NLEnergyCostCoordinator:
         """Total fixed electricity costs per day (incl. BTW)."""
         fixed = float(self._get(CONF_FIXED_DELIVERY_DAY_ELECTRICITY, DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY))
         system = float(self._get(CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY, DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY))
-        reduction_year = float(self._get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_YEAR))
-        reduction_day = reduction_year / DAYS_PER_YEAR
+        reduction_day = float(self._get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_DAY))
         return fixed + system + reduction_day
 
     @property

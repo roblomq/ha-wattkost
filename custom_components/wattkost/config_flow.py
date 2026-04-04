@@ -46,7 +46,7 @@ from .const import (
     DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
-    DEFAULT_ENERGY_REDUCTION_YEAR,
+    DEFAULT_ENERGY_REDUCTION_DAY,
     DEFAULT_GAS_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_GAS,
     DEFAULT_SYSTEM_OPERATOR_DAY_GAS,
@@ -232,10 +232,10 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Required(
                     CONF_ENERGY_REDUCTION_YEAR,
-                    default=DEFAULT_ENERGY_REDUCTION_YEAR,
+                    default=round(DEFAULT_ENERGY_REDUCTION_DAY, 5),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=-500, max=0, step="any", mode="box", unit_of_measurement="€/jaar"
+                        min=-5, max=0, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 # Gas tariffs & fixed costs
@@ -382,7 +382,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                 ),
                 vol.Required(
                     CONF_ENERGY_REDUCTION_YEAR,
-                    default=data.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_YEAR),
+                    default=data.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_DAY),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=-500, max=0, step="any", mode="box", unit_of_measurement="€/jaar"

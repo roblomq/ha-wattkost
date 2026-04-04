@@ -45,7 +45,7 @@
         "data": {
           "fixed_delivery_day_electricity": "Fixed delivery costs electricity €/day",
           "system_operator_day_electricity": "System operator costs electricity €/day",
-          "energy_reduction_year": "Energy tax reduction €/year",
+          "energy_reduction_year": "Energy tax reduction €/day",
           "gas_tariff": "Gas tariff €/m³",
           "fixed_delivery_day_gas": "Fixed delivery costs gas €/day",
           "system_operator_day_gas": "System operator costs gas €/day"
@@ -71,7 +71,7 @@
         "data": {
           "fixed_delivery_day_electricity": "Fixed delivery costs electricity €/day",
           "system_operator_day_electricity": "System operator costs electricity €/day",
-          "energy_reduction_year": "Energy tax reduction €/year",
+          "energy_reduction_year": "Energy tax reduction €/day",
           "gas_tariff": "Gas tariff €/m³",
           "fixed_delivery_day_gas": "Fixed delivery costs gas €/day",
           "system_operator_day_gas": "System operator costs gas €/day"
