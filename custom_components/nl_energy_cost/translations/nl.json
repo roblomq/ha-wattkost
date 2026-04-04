@@ -1,88 +1,80 @@
 {
-  "title": "WattKost",
   "config": {
     "step": {
       "user": {
-        "title": "Stap 1/4 — Stroom import & productie sensoren",
-        "description": "Selecteer de sensoren voor stroomverbruik en zonnepanelen. Alle velden zijn optioneel — vul in wat beschikbaar is.",
+        "title": "Import sensoren",
         "data": {
-          "consumption_w_sensor": "Verbruik W (totaal huidig vermogen)",
-          "consumption_kwh_sensor": "Verbruik kWh (totaal)",
-          "import_t1_kwh_sensor": "Import T1 kWh (slimme meter)",
-          "import_t2_kwh_sensor": "Import T2 kWh (slimme meter)",
+          "import_t1_kwh_sensor": "Import T1 kWh",
+          "import_t2_kwh_sensor": "Import T2 kWh",
           "import_total_kwh_sensor": "Import totaal kWh",
-          "import_w_sensor": "Import huidig vermogen W",
-          "solar_kwh_sensor": "Zonnepanelen productie kWh (totaal)",
-          "solar_w_sensor": "Zonnepanelen huidig vermogen W"
+          "import_w_sensor": "Import huidig vermogen W"
         }
       },
       "export_sensors": {
-        "title": "Stap 2/4 — Teruglevering & gas sensoren",
-        "description": "Selecteer de sensoren voor teruglevering aan het net en gasverbruik.",
+        "title": "Export / teruglevering sensoren",
         "data": {
-          "export_t1_kwh_sensor": "Export T1 kWh (teruglevering slimme meter)",
-          "export_t2_kwh_sensor": "Export T2 kWh (teruglevering slimme meter)",
+          "export_t1_kwh_sensor": "Export T1 kWh",
+          "export_t2_kwh_sensor": "Export T2 kWh",
           "export_total_kwh_sensor": "Export totaal kWh",
-          "export_w_sensor": "Export huidig vermogen W",
+          "export_w_sensor": "Export huidig vermogen W"
+        }
+      },
+      "other_sensors": {
+        "title": "Opwekking, consumptie & gas sensoren",
+        "data": {
+          "solar_kwh_sensor": "Zonnepanelen productie kWh",
+          "solar_w_sensor": "Zonnepanelen huidig vermogen W",
+          "consumption_w_sensor": "Verbruik W (totaal huidig vermogen)",
+          "consumption_kwh_sensor": "Verbruik kWh (totaal)",
           "gas_daily_m3_sensor": "Gasverbruik m³ (cumulatief)"
         }
       },
       "electricity_tariffs": {
-        "title": "Stap 3/4 — Stroomtarieven (incl. BTW 21%)",
-        "description": "Vul de tarieven in zoals vermeld op uw energiecontract. Standaardwaarden zijn gebaseerd op Greenchoice tarieven vanaf 1 jan 2026.",
+        "title": "Stroomtarieven (incl. BTW)",
         "data": {
-          "use_single_tariff": "Enkeltarief (aan = enkel, uit = normaal/dal split)",
-          "tariff_enkel": "Enkeltarief € per kWh (incl. BTW)",
-          "tariff_normaal": "Normaaltarief € per kWh — T1/dag (incl. BTW)",
-          "tariff_dal": "Daltarief € per kWh — T2/nacht (incl. BTW)",
-          "tariff_return": "Terugleververgoeding € per kWh (excl. BTW)",
-          "tariff_return_cost": "Terugleveerkosten € per kWh (incl. BTW)"
+          "use_single_tariff": "Enkeltarief",
+          "tariff_enkel": "Enkeltarief €/kWh",
+          "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
+          "tariff_dal": "Daltarief €/kWh (T2/nacht)",
+          "tariff_return": "Terugleververgoeding €/kWh (excl. BTW)",
+          "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
         }
       },
       "fixed_costs": {
-        "title": "Stap 4/4 — Vaste kosten & gastarieven (incl. BTW)",
-        "description": "Vaste leveringskosten en systeembeheerkosten per dag. De energiebelastingkorting wordt automatisch omgerekend naar een dagbedrag.",
+        "title": "Vaste kosten & gastarieven (incl. BTW)",
         "data": {
-          "fixed_delivery_day_electricity": "Vaste leveringskosten stroom € per dag (incl. BTW)",
-          "system_operator_day_electricity": "Systeembeheerkosten stroom € per dag (incl. BTW)",
-          "energy_reduction_year": "Vermindering energiebelasting € per jaar (negatief getal)",
-          "gas_tariff": "Gastarief € per m³ (incl. BTW)",
-          "fixed_delivery_day_gas": "Vaste leveringskosten gas € per dag (incl. BTW)",
-          "system_operator_day_gas": "Systeembeheerkosten gas € per dag (incl. BTW)"
+          "fixed_delivery_day_electricity": "Vaste leveringskosten stroom €/dag",
+          "system_operator_day_electricity": "Systeembeheerkosten stroom €/dag",
+          "energy_reduction_year": "Vermindering energiebelasting €/jaar",
+          "gas_tariff": "Gastarief €/m³",
+          "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
+          "system_operator_day_gas": "Systeembeheerkosten gas €/dag"
         }
       }
-    },
-    "error": {
-      "unknown": "Onbekende fout opgetreden"
-    },
-    "abort": {
-      "already_configured": "WattKost is al geconfigureerd"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Tarieven aanpassen",
-        "description": "Pas uw stroom- en teruglevertarieven aan.",
+        "title": "Stroomtarieven aanpassen (incl. BTW)",
         "data": {
-          "use_single_tariff": "Enkeltarief (aan = enkel, uit = normaal/dal split)",
-          "tariff_enkel": "Enkeltarief € per kWh (incl. BTW)",
-          "tariff_normaal": "Normaaltarief € per kWh — T1/dag (incl. BTW)",
-          "tariff_dal": "Daltarief € per kWh — T2/nacht (incl. BTW)",
-          "tariff_return": "Terugleververgoeding € per kWh (excl. BTW)",
-          "tariff_return_cost": "Terugleveerkosten € per kWh (incl. BTW)"
+          "use_single_tariff": "Enkeltarief",
+          "tariff_enkel": "Enkeltarief €/kWh",
+          "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
+          "tariff_dal": "Daltarief €/kWh (T2/nacht)",
+          "tariff_return": "Terugleververgoeding €/kWh (excl. BTW)",
+          "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
         }
       },
       "fixed_costs_options": {
-        "title": "Vaste kosten aanpassen",
-        "description": "Pas de vaste kosten en gastarieven aan.",
+        "title": "Vaste kosten & gastarieven aanpassen (incl. BTW)",
         "data": {
-          "fixed_delivery_day_electricity": "Vaste leveringskosten stroom € per dag (incl. BTW)",
-          "system_operator_day_electricity": "Systeembeheerkosten stroom € per dag (incl. BTW)",
-          "energy_reduction_year": "Vermindering energiebelasting € per jaar (negatief getal)",
-          "gas_tariff": "Gastarief € per m³ (incl. BTW)",
-          "fixed_delivery_day_gas": "Vaste leveringskosten gas € per dag (incl. BTW)",
-          "system_operator_day_gas": "Systeembeheerkosten gas € per dag (incl. BTW)"
+          "fixed_delivery_day_electricity": "Vaste leveringskosten stroom €/dag",
+          "system_operator_day_electricity": "Systeembeheerkosten stroom €/dag",
+          "energy_reduction_year": "Vermindering energiebelasting €/jaar",
+          "gas_tariff": "Gastarief €/m³",
+          "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
+          "system_operator_day_gas": "Systeembeheerkosten gas €/dag"
         }
       }
     }
