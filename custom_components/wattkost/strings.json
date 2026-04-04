@@ -38,6 +38,14 @@
           "tariff_dal": "Daltarief €/kWh (T2/nacht)",
           "tariff_return": "Terugleververgoeding €/kWh (excl. BTW)",
           "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
+        },
+        "data_description": {
+          "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
+          "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_dal": "Het all-in tarief per kWh stroom tijdens daluren (nacht/weekend, T2), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_return": "De vergoeding die je ontvangt per kWh teruggeleverde stroom, exclusief BTW. Te vinden op je energiecontract of factuur.",
+          "tariff_return_cost": "De kosten die je betaalt per kWh teruggeleverde stroom, inclusief BTW. Zie je contract voor de terugleveerkosten."
         }
       },
       "fixed_costs": {
@@ -49,6 +57,14 @@
           "gas_tariff": "Gastarief €/m³",
           "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
           "system_operator_day_gas": "Systeembeheerkosten gas €/dag"
+        },
+        "data_description": {
+          "fixed_delivery_day_electricity": "De vaste leveringskosten per dag voor stroom, ongeacht je verbruik. Inclusief BTW.",
+          "system_operator_day_electricity": "De kosten voor aansluiting op het elektriciteitsnet en transport per dag, betaald via je leverancier namens de netbeheerder. Inclusief BTW.",
+          "energy_reduction_year": "De korting op de energiebelasting per dag (negatief bedrag, inclusief BTW). Jaarlijkse korting ÷ 365. Elk huishouden ontvangt deze vaste korting.",
+          "gas_tariff": "Het all-in tarief per m³ gas dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "fixed_delivery_day_gas": "De vaste leveringskosten per dag voor gas, ongeacht je verbruik. Inclusief BTW.",
+          "system_operator_day_gas": "De kosten voor aansluiting op het gasnet en transport per dag, betaald via je leverancier namens de netbeheerder. Inclusief BTW."
         }
       }
     }
@@ -64,6 +80,14 @@
           "tariff_dal": "Daltarief €/kWh (T2/nacht)",
           "tariff_return": "Terugleververgoeding €/kWh (excl. BTW)",
           "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
+        },
+        "data_description": {
+          "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
+          "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_dal": "Het all-in tarief per kWh stroom tijdens daluren (nacht/weekend, T2), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "tariff_return": "De vergoeding die je ontvangt per kWh teruggeleverde stroom, exclusief BTW. Te vinden op je energiecontract of factuur.",
+          "tariff_return_cost": "De kosten die je betaalt per kWh teruggeleverde stroom, inclusief BTW. Zie je contract voor de terugleveerkosten."
         }
       },
       "fixed_costs_options": {
@@ -75,6 +99,14 @@
           "gas_tariff": "Gastarief €/m³",
           "fixed_delivery_day_gas": "Vaste leveringskosten gas €/dag",
           "system_operator_day_gas": "Systeembeheerkosten gas €/dag"
+        },
+        "data_description": {
+          "fixed_delivery_day_electricity": "De vaste leveringskosten per dag voor stroom, ongeacht je verbruik. Inclusief BTW.",
+          "system_operator_day_electricity": "De kosten voor aansluiting op het elektriciteitsnet en transport per dag, betaald via je leverancier namens de netbeheerder. Inclusief BTW.",
+          "energy_reduction_year": "De korting op de energiebelasting per dag (negatief bedrag, inclusief BTW). Jaarlijkse korting ÷ 365. Elk huishouden ontvangt deze vaste korting.",
+          "gas_tariff": "Het all-in tarief per m³ gas dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
+          "fixed_delivery_day_gas": "De vaste leveringskosten per dag voor gas, ongeacht je verbruik. Inclusief BTW.",
+          "system_operator_day_gas": "De kosten voor aansluiting op het gasnet en transport per dag, betaald via je leverancier namens de netbeheerder. Inclusief BTW."
         }
       }
     }

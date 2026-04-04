@@ -38,6 +38,14 @@
           "tariff_dal": "Off-peak tariff €/kWh (T2/night)",
           "tariff_return": "Return delivery compensation €/kWh (excl. VAT)",
           "tariff_return_cost": "Return delivery costs €/kWh (incl. VAT)"
+        },
+        "data_description": {
+          "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
+          "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_dal": "The all-in rate per kWh electricity during off-peak hours (night/weekend, T2), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_return": "The compensation you receive per kWh of electricity returned to the grid, excluding VAT. Found on your energy contract or invoice.",
+          "tariff_return_cost": "The costs you pay per kWh of electricity returned to the grid, including VAT. See your contract for return delivery costs."
         }
       },
       "fixed_costs": {
@@ -49,6 +57,14 @@
           "gas_tariff": "Gas tariff €/m³",
           "fixed_delivery_day_gas": "Fixed delivery costs gas €/day",
           "system_operator_day_gas": "System operator costs gas €/day"
+        },
+        "data_description": {
+          "fixed_delivery_day_electricity": "Fixed delivery costs per day for electricity, regardless of your usage. Including VAT.",
+          "system_operator_day_electricity": "Costs for connection to the electricity grid and transport per day, paid via your supplier on behalf of the grid operator. Including VAT.",
+          "energy_reduction_year": "The energy tax reduction per day (negative amount, including VAT). Annual reduction ÷ 365. Every household receives this fixed discount.",
+          "gas_tariff": "The all-in rate per m³ gas you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
+          "fixed_delivery_day_gas": "Fixed delivery costs per day for gas, regardless of your usage. Including VAT.",
+          "system_operator_day_gas": "Costs for connection to the gas grid and transport per day, paid via your supplier on behalf of the grid operator. Including VAT."
         }
       }
     }
@@ -64,6 +80,14 @@
           "tariff_dal": "Off-peak tariff €/kWh (T2/night)",
           "tariff_return": "Return delivery compensation €/kWh (excl. VAT)",
           "tariff_return_cost": "Return delivery costs €/kWh (incl. VAT)"
+        },
+        "data_description": {
+          "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
+          "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_dal": "The all-in rate per kWh electricity during off-peak hours (night/weekend, T2), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_return": "The compensation you receive per kWh of electricity returned to the grid, excluding VAT. Found on your energy contract or invoice.",
+          "tariff_return_cost": "The costs you pay per kWh of electricity returned to the grid, including VAT. See your contract for return delivery costs."
         }
       },
       "fixed_costs_options": {
@@ -75,6 +99,14 @@
           "gas_tariff": "Gas tariff €/m³",
           "fixed_delivery_day_gas": "Fixed delivery costs gas €/day",
           "system_operator_day_gas": "System operator costs gas €/day"
+        },
+        "data_description": {
+          "fixed_delivery_day_electricity": "Fixed delivery costs per day for electricity, regardless of your usage. Including VAT.",
+          "system_operator_day_electricity": "Costs for connection to the electricity grid and transport per day, paid via your supplier on behalf of the grid operator. Including VAT.",
+          "energy_reduction_year": "The energy tax reduction per day (negative amount, including VAT). Annual reduction ÷ 365. Every household receives this fixed discount.",
+          "gas_tariff": "The all-in rate per m³ gas you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
+          "fixed_delivery_day_gas": "Fixed delivery costs per day for gas, regardless of your usage. Including VAT.",
+          "system_operator_day_gas": "Costs for connection to the gas grid and transport per day, paid via your supplier on behalf of the grid operator. Including VAT."
         }
       }
     }
