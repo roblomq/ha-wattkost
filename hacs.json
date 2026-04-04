@@ -1,6 +1,5 @@
 {
-  "name": "WattKost",
-  "render_readme": true,
-  "homeassistant": "2024.1.0",
-  "country": ["NL"]
+    "name": "WattKost",
+    "render_readme": true,
+    "country": ["NL"]
 }
