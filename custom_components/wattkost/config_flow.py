@@ -160,35 +160,35 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_TARIFF_ENKEL, default=DEFAULT_TARIFF_ENKEL
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
                     CONF_TARIFF_NORMAAL, default=DEFAULT_TARIFF_NORMAAL
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
                     CONF_TARIFF_DAL, default=DEFAULT_TARIFF_DAL
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
                     CONF_TARIFF_RETURN, default=DEFAULT_TARIFF_RETURN
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh excl. BTW"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh excl. BTW"
                     )
                 ),
                 vol.Required(
                     CONF_TARIFF_RETURN_COST, default=DEFAULT_TARIFF_RETURN_COST
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
             }
@@ -219,7 +219,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     default=round(DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY, 5),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -227,7 +227,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     default=round(DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY, 5),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -235,7 +235,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     default=DEFAULT_ENERGY_REDUCTION_YEAR,
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=-500, max=0, step=0.0001, mode="box", unit_of_measurement="€/jaar"
+                        min=-500, max=0, step="any", mode="box", unit_of_measurement="€/jaar"
                     )
                 ),
                 # Gas tariffs & fixed costs
@@ -243,7 +243,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_GAS_TARIFF, default=DEFAULT_GAS_TARIFF
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/m³"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/m³"
                     )
                 ),
                 vol.Required(
@@ -251,7 +251,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     default=round(DEFAULT_FIXED_DELIVERY_DAY_GAS, 5),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -259,7 +259,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     default=round(DEFAULT_SYSTEM_OPERATOR_DAY_GAS, 5),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
             }
@@ -308,7 +308,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_TARIFF_ENKEL, DEFAULT_TARIFF_ENKEL),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
@@ -316,7 +316,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_TARIFF_NORMAAL, DEFAULT_TARIFF_NORMAAL),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
@@ -324,7 +324,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_TARIFF_DAL, DEFAULT_TARIFF_DAL),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
@@ -332,7 +332,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_TARIFF_RETURN, DEFAULT_TARIFF_RETURN),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh excl. BTW"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh excl. BTW"
                     )
                 ),
                 vol.Required(
@@ -340,7 +340,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_TARIFF_RETURN_COST, DEFAULT_TARIFF_RETURN_COST),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=2, step=0.00001, mode="box", unit_of_measurement="€/kWh"
+                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
             }
@@ -369,7 +369,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_FIXED_DELIVERY_DAY_ELECTRICITY, DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -377,7 +377,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY, DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -385,7 +385,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_YEAR),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=-500, max=0, step=0.0001, mode="box", unit_of_measurement="€/jaar"
+                        min=-500, max=0, step="any", mode="box", unit_of_measurement="€/jaar"
                     )
                 ),
                 vol.Required(
@@ -393,7 +393,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/m³"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/m³"
                     )
                 ),
                 vol.Required(
@@ -401,7 +401,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_FIXED_DELIVERY_DAY_GAS, DEFAULT_FIXED_DELIVERY_DAY_GAS),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
@@ -409,7 +409,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_SYSTEM_OPERATOR_DAY_GAS, DEFAULT_SYSTEM_OPERATOR_DAY_GAS),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=0, max=5, step=0.00001, mode="box", unit_of_measurement="€/dag"
+                        min=0, max=5, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
             }
