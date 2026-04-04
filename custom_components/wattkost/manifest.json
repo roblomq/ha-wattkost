@@ -1,11 +1,11 @@
 {
-    "domain": "wattkost",
-    "name": "WattKost",
-    "version": "1.1.2",
-    "config_flow": true,
-    "documentation": "https://github.com/roblomq/ha-wattkost",
-    "issue_tracker": "https://github.com/roblomq/ha-wattkost/issues",
-    "codeowners": ["@roblomq"],
-    "requirements": [],
-    "iot_class": "local_polling"
+      "domain": "wattkost",
+      "name": "WattKost",
+      "codeowners": ["@roblomq"],
+      "config_flow": true,
+      "documentation": "https://github.com/roblomq/ha-wattkost",
+      "iot_class": "local_polling",
+      "issue_tracker": "https://github.com/roblomq/ha-wattkost/issues",
+      "requirements": [],
+      "version": "1.1.2"
 }
