@@ -29,7 +29,7 @@ Een nauwkeurige energiekostenberekening voor Nederlandse energiecontracten, voll
 4. Klik **Toevoegen**, zoek naar **WattKost** en installeer
 5. Herstart Home Assistant
 6. Ga naar **Instellingen → Apparaten & Diensten → Integratie toevoegen**
-7. Zoek op **WattKost** en volg de wizard (4 stappen)
+7. Zoek op **WattKost** en volg de wizard (5 stappen)
 
 ---
 
@@ -45,50 +45,60 @@ Herstart Home Assistant en voeg de integratie toe via de UI.
 
 ---
 
-## Configuratiewizard (4 stappen)
+## Configuratiewizard (5 stappen)
 
-### Stap 1 — Stroom import & productie sensoren
-| Veld | Sensor in jouw HA |
-|------|-------------------|
-| Verbruik W (totaal) | `sensor.energie_consumptie_w_totaal` |
-| Verbruik kWh (totaal) | `sensor.energie_consumptie_kwh_totaal` |
-| Import T1 kWh | `sensor.slimme_meter_energie_import_t1_kwh` |
-| Import T2 kWh | `sensor.slimme_meter_energie_import_t2_kwh` |
-| Import totaal kWh | `sensor.energie_import_kwh_totaal` |
-| Import W | `sensor.slimme_meter_energie_import_w` |
-| Zonnepanelen kWh | `sensor.samilpower_inverter_energie_productie_kwh_total` |
-| Zonnepanelen W | `sensor.samilpower_inverter_energie_productie_w` |
+Alle velden zijn optioneel — vul alleen in wat beschikbaar is in jouw situatie. De integratie werkt ook als niet alle sensoren beschikbaar zijn.
 
-### Stap 2 — Teruglevering & gas sensoren
-| Veld | Sensor in jouw HA |
-|------|-------------------|
-| Export T1 kWh | `sensor.slimme_meter_energie_export_t1_kwh` |
-| Export T2 kWh | `sensor.slimme_meter_energie_export_t2_kwh` |
-| Export totaal kWh | `sensor.energie_export_kwh_totaal` |
-| Export W | `sensor.slimme_meter_energie_export_w` |
-| Gas m³ (cumulatief) | `sensor.gas_consumptie_dagelijks` |
+### Stap 1 — Import sensoren
 
-### Stap 3 — Stroomtarieven (incl. BTW 21%)
-Gebaseerd op het screenshot (Greenchoice, vanaf 1 jan 2026):
+| Veld | Beschrijving |
+|------|--------------|
+| Import T1 kWh | Cumulatieve kWh-meter voor import tijdens normaaluren (T1/dag). Komt van je slimme meter. |
+| Import T2 kWh | Cumulatieve kWh-meter voor import tijdens daluren (T2/nacht). Komt van je slimme meter. |
+| Import totaal kWh | Cumulatieve totale import in kWh (als je geen T1/T2 splitsing hebt). |
+| Import huidig vermogen W | Actueel importvermogen in Watt. Gebruikt voor real-time kostencalculatie. |
 
-| Parameter | Standaardwaarde |
-|-----------|----------------|
-| Enkeltarief | € 0,21532 /kWh |
-| Normaaltarief (T1/dag) | € 0,20927 /kWh |
-| Daltarief (T2/nacht) | € 0,22137 /kWh |
-| Terugleververgoeding | € 0,16000 /kWh *excl.* BTW |
-| Terugleveerkosten | € 0,15488 /kWh |
+### Stap 2 — Export / teruglevering sensoren
 
-### Stap 4 — Vaste kosten & gastarieven (incl. BTW)
+| Veld | Beschrijving |
+|------|--------------|
+| Export T1 kWh | Cumulatieve kWh-meter voor teruglevering tijdens normaaluren (T1). Komt van je slimme meter. |
+| Export T2 kWh | Cumulatieve kWh-meter voor teruglevering tijdens daluren (T2). Komt van je slimme meter. |
+| Export totaal kWh | Cumulatieve totale teruglevering in kWh (als je geen T1/T2 splitsing hebt). |
+| Export huidig vermogen W | Actueel terugleveringsvermogen in Watt. |
 
-| Parameter | Standaardwaarde |
-|-----------|----------------|
-| Vaste leveringskosten stroom | € 0,30635 /dag |
-| Systeembeheerkosten stroom | € 1,30970 /jaar → € 0,00358 /dag |
-| Vermindering energiebelasting | −€ 1,7232 /jaar → −€ 0,00472 /dag |
-| Gastarief | € 1,23274 /m³ |
-| Vaste leveringskosten gas | € 0,26922 /dag |
-| Systeembeheerkosten gas | € 0,73048 /jaar → € 0,00200 /dag |
+### Stap 3 — Opwekking, consumptie & gas sensoren
+
+| Veld | Beschrijving |
+|------|--------------|
+| Zonnepanelen productie kWh | Cumulatieve opgewekte kWh van je zonnepanelen (dag- of totaalteller van je omvormer). |
+| Zonnepanelen huidig vermogen W | Actueel opgewekt vermogen in Watt van je zonnepanelen. |
+| Verbruik W (totaal huidig vermogen) | Totaal huidig stroomverbruik in Watt (inclusief zonnepanelenproductie). |
+| Verbruik kWh (totaal) | Cumulatieve totale stroomconsumptie in kWh. |
+| Gasverbruik m³ (cumulatief) | Cumulatieve gasmeter in m³. Komt van je slimme meter. |
+
+### Stap 4 — Stroomtarieven (incl. BTW 21%)
+
+Gebaseerd op Greenchoice-tarieven vanaf 1 jan 2026 als standaardwaarden:
+
+| Parameter | Standaardwaarde | Beschrijving |
+|-----------|----------------|--------------|
+| Enkeltarief | € 0,21532 /kWh | All-in tarief als je meter geen dag/nacht onderscheid maakt |
+| Normaaltarief (T1/dag) | € 0,20927 /kWh | All-in tarief tijdens normaaluren (overdag) |
+| Daltarief (T2/nacht) | € 0,22137 /kWh | All-in tarief tijdens daluren (nacht/weekend) |
+| Terugleververgoeding | € 0,16000 /kWh *excl.* BTW | Vergoeding die je ontvangt per kWh teruggeleverde stroom |
+| Terugleveerkosten | € 0,15488 /kWh | Kosten die je betaalt per kWh teruggeleverde stroom |
+
+### Stap 5 — Vaste kosten & gastarieven (incl. BTW)
+
+| Parameter | Standaardwaarde | Beschrijving |
+|-----------|----------------|--------------|
+| Vaste leveringskosten stroom | € 0,30635 /dag | Vaste dagprijs voor stroomlevering, ongeacht verbruik |
+| Systeembeheerkosten stroom | € 0,04303 /dag | Kosten netbeheerder per dag (transportkosten aansluiting) |
+| Vermindering energiebelasting | −€ 1,7232 /dag | Vaste dagkorting op energiebelasting (negatief bedrag) |
+| Gastarief | € 1,23274 /m³ | All-in tarief per m³ gas |
+| Vaste leveringskosten gas | € 0,26922 /dag | Vaste dagprijs voor gaslevering, ongeacht verbruik |
+| Systeembeheerkosten gas | € 0,02400 /dag | Kosten gasnetbeheerder per dag |
 
 ---
 
@@ -100,10 +110,10 @@ Gebaseerd op het screenshot (Greenchoice, vanaf 1 jan 2026):
 | `sensor.stroom_actueel_importtarief` | €/kWh | Huidig importtarief (incl. BTW) |
 | `sensor.stroom_actueel_teruglevertarief` | €/kWh | Netto teruglevertarief (vergoeding − kosten) |
 | `sensor.stroom_variabele_dagkosten` | € | Variabele kosten vandaag (import − teruglevercredit) |
-| `sensor.stroom_vaste_dagkosten` | € | Vaste leveringskosten + systeembeheer vandaag |
+| `sensor.stroom_vaste_dagkosten` | € | Vaste leveringskosten + systeembeheer + reductie vandaag |
 | `sensor.stroom_totale_dagkosten` | € | Variabel + vast vandaag |
 | `sensor.stroom_maandkosten` | € | Totale stroomkosten deze maand |
-| `sensor.stroom_netto_dag_kwh_import_export` | kWh | Netto import vandaag |
+| `sensor.stroom_netto_dag_kwh_import_export` | kWh | Netto import vandaag (import − export) |
 | `sensor.gas_dagkosten` | € | Gaskosten vandaag (variabel + vast) |
 | `sensor.gas_maandkosten` | € | Totale gaskosten deze maand |
 | `sensor.totale_dagkosten_energie` | € | Stroom + gas vandaag |
@@ -115,7 +125,7 @@ Gebaseerd op het screenshot (Greenchoice, vanaf 1 jan 2026):
 
 ### Stroom dagkosten (variabel)
 ```
-import_kosten   = kWh_import_vandaag × importtarief
+import_kosten    = kWh_import_vandaag × importtarief
 teruglevercredit = kWh_export_vandaag × (terugleververgoeding_incl_btw − terugleveerkosten)
 variabele_kosten = import_kosten − teruglevercredit
 ```
