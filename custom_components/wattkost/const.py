@@ -45,7 +45,7 @@ CONF_GAS_TARIFF = "gas_tariff"                 # € per m³ incl. BTW
 CONF_FIXED_DELIVERY_DAY_GAS = "fixed_delivery_day_gas"      # € per dag
 CONF_SYSTEM_OPERATOR_DAY_GAS = "system_operator_day_gas"    # € per dag
 
-# Defaults — based on Greenchoice screenshot values (incl. BTW, vanaf 1 jan 2026)
+# Defaults — voorbeeldwaarden (incl. BTW, 2026)
 DEFAULT_TARIFF_ENKEL = 0.21532
 DEFAULT_TARIFF_NORMAAL = 0.20927
 DEFAULT_TARIFF_DAL = 0.22137

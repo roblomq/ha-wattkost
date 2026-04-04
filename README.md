@@ -79,7 +79,7 @@ Alle velden zijn optioneel — vul alleen in wat beschikbaar is in jouw situatie
 
 ### Stap 4 — Stroomtarieven (incl. BTW 21%)
 
-Gebaseerd op Greenchoice-tarieven vanaf 1 jan 2026 als standaardwaarden:
+Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 
 | Parameter | Standaardwaarde | Beschrijving |
 |-----------|----------------|--------------|
