@@ -1,0 +1,12 @@
+{
+  "domain": "nl_energy_cost",
+  "name": "WattKost",
+  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/roblomq/ha-wattkost",
+  "issue_tracker": "https://github.com/roblomq/ha-wattkost/issues",
+  "codeowners": ["@roblomq"],
+  "requirements": [],
+  "iot_class": "local_polling",
+  "homeassistant": "2024.1.0"
+}

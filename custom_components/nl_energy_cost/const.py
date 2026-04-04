@@ -1,0 +1,77 @@
+"""Constants for the NL Energy Cost integration."""
+
+DOMAIN = "nl_energy_cost"
+PLATFORMS = ["sensor"]
+
+# Config entry keys - Electricity sensors
+CONF_CONSUMPTION_W = "consumption_w_sensor"
+CONF_CONSUMPTION_KWH = "consumption_kwh_sensor"
+
+CONF_IMPORT_T1_KWH = "import_t1_kwh_sensor"
+CONF_IMPORT_T2_KWH = "import_t2_kwh_sensor"
+CONF_IMPORT_TOTAL_KWH = "import_total_kwh_sensor"
+CONF_IMPORT_W = "import_w_sensor"
+
+CONF_EXPORT_T1_KWH = "export_t1_kwh_sensor"
+CONF_EXPORT_T2_KWH = "export_t2_kwh_sensor"
+CONF_EXPORT_TOTAL_KWH = "export_total_kwh_sensor"
+CONF_EXPORT_W = "export_w_sensor"
+
+CONF_SOLAR_KWH = "solar_kwh_sensor"
+CONF_SOLAR_W = "solar_w_sensor"
+
+# Config entry keys - Gas sensors
+CONF_GAS_DAILY_M3 = "gas_daily_m3_sensor"
+
+# Electricity tariff parameters (incl. BTW)
+CONF_TARIFF_ENKEL = "tariff_enkel"            # € per kWh incl. BTW
+CONF_TARIFF_NORMAAL = "tariff_normaal"         # € per kWh incl. BTW
+CONF_TARIFF_DAL = "tariff_dal"                 # € per kWh incl. BTW
+CONF_TARIFF_RETURN = "tariff_return"           # € per kWh excl. BTW (teruglevering)
+CONF_TARIFF_RETURN_COST = "tariff_return_cost" # € per kWh incl. BTW (terugleveerkosten)
+
+# Electricity: use enkel or normaal/dal split
+CONF_USE_SINGLE_TARIFF = "use_single_tariff"   # True = enkel tarief, False = normaal/dal
+
+# Fixed daily costs electricity (incl. BTW)
+CONF_FIXED_DELIVERY_DAY_ELECTRICITY = "fixed_delivery_day_electricity"    # € per dag
+CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY = "system_operator_day_electricity"  # € per dag
+CONF_ENERGY_REDUCTION_YEAR = "energy_reduction_year"                       # € per jaar (korting)
+
+# Gas tariff parameters (incl. BTW)
+CONF_GAS_TARIFF = "gas_tariff"                 # € per m³ incl. BTW
+
+# Fixed daily costs gas (incl. BTW)
+CONF_FIXED_DELIVERY_DAY_GAS = "fixed_delivery_day_gas"      # € per dag
+CONF_SYSTEM_OPERATOR_DAY_GAS = "system_operator_day_gas"    # € per dag
+
+# Defaults — based on Greenchoice screenshot values (incl. BTW, vanaf 1 jan 2026)
+DEFAULT_TARIFF_ENKEL = 0.21532
+DEFAULT_TARIFF_NORMAAL = 0.20927
+DEFAULT_TARIFF_DAL = 0.22137
+DEFAULT_TARIFF_RETURN = 0.16000          # excl. BTW
+DEFAULT_TARIFF_RETURN_COST = 0.15488     # incl. BTW (terugleveerkosten per kWh)
+DEFAULT_USE_SINGLE_TARIFF = True
+
+DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY = 0.30635
+DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY = 1.30970 / 30.4375   # € per jaar -> per dag
+DEFAULT_ENERGY_REDUCTION_YEAR = -1.7232  # korting per jaar
+
+DEFAULT_GAS_TARIFF = 1.23274
+DEFAULT_FIXED_DELIVERY_DAY_GAS = 0.26922
+DEFAULT_SYSTEM_OPERATOR_DAY_GAS = 0.73048 / 30.4375
+
+# Sensor name suffixes
+SENSOR_ELECTRICITY_CURRENT_COST = "electricity_current_cost"
+SENSOR_ELECTRICITY_DAILY_COST = "electricity_daily_cost"
+SENSOR_ELECTRICITY_MONTHLY_COST = "electricity_monthly_cost"
+SENSOR_ELECTRICITY_IMPORT_DAILY = "electricity_import_daily_kwh"
+SENSOR_ELECTRICITY_EXPORT_DAILY = "electricity_export_daily_kwh"
+SENSOR_ELECTRICITY_NET_DAILY = "electricity_net_daily_kwh"
+SENSOR_ELECTRICITY_SOLAR_DAILY = "electricity_solar_daily_kwh"
+SENSOR_GAS_DAILY_COST = "gas_daily_cost"
+SENSOR_GAS_MONTHLY_COST = "gas_monthly_cost"
+SENSOR_TOTAL_DAILY_COST = "total_daily_cost"
+SENSOR_TOTAL_MONTHLY_COST = "total_monthly_cost"
+SENSOR_CURRENT_IMPORT_RATE = "current_import_rate"
+SENSOR_CURRENT_EXPORT_RATE = "current_export_rate"
