@@ -57,16 +57,11 @@ _LOGGER = logging.getLogger(__name__)
 SENSOR_SELECTOR = selector.EntitySelector(
     selector.EntitySelectorConfig(domain="sensor")
 )
-OPTIONAL_SENSOR_SELECTOR = selector.EntitySelector(
-    selector.EntitySelectorConfig(domain="sensor", multiple=False)
-)
 
 
-def _sensor_schema_optional(default=None):
-    """Return an optional entity selector."""
-    return selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="sensor")
-    )
+def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Remove None and empty-string entity values from user input."""
+    return {k: v for k, v in user_input.items() if v not in (None, "")}
 
 
 class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -81,42 +76,33 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Step 1: Electricity sensors."""
-        errors: dict[str, str] = {}
-
+        """Step 1: Import sensors."""
         if user_input is not None:
-            self._data.update(user_input)
+            self._data.update(_clean(user_input))
             return await self.async_step_export_sensors()
 
         schema = vol.Schema(
             {
-                vol.Optional(CONF_CONSUMPTION_W): SENSOR_SELECTOR,
-                vol.Optional(CONF_CONSUMPTION_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_IMPORT_T1_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_IMPORT_T2_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_IMPORT_TOTAL_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_IMPORT_W): SENSOR_SELECTOR,
-                vol.Optional(CONF_SOLAR_KWH): SENSOR_SELECTOR,
-                vol.Optional(CONF_SOLAR_W): SENSOR_SELECTOR,
             }
         )
 
         return self.async_show_form(
             step_id="user",
             data_schema=schema,
-            errors=errors,
-            description_placeholders={
-                "title": "Stap 1/4: Stroom import & productie sensoren"
-            },
+            last_step=False,
         )
 
     async def async_step_export_sensors(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Step 2: Export/teruglevering sensors and gas."""
+        """Step 2: Export / teruglevering sensors."""
         if user_input is not None:
-            self._data.update(user_input)
-            return await self.async_step_electricity_tariffs()
+            self._data.update(_clean(user_input))
+            return await self.async_step_other_sensors()
 
         schema = vol.Schema(
             {
@@ -124,22 +110,43 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_EXPORT_T2_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_EXPORT_TOTAL_KWH): SENSOR_SELECTOR,
                 vol.Optional(CONF_EXPORT_W): SENSOR_SELECTOR,
-                vol.Optional(CONF_GAS_DAILY_M3): SENSOR_SELECTOR,
             }
         )
 
         return self.async_show_form(
             step_id="export_sensors",
             data_schema=schema,
-            description_placeholders={
-                "title": "Stap 2/4: Teruglevering & gas sensoren"
-            },
+            last_step=False,
+        )
+
+    async def async_step_other_sensors(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Step 3: Solar, consumption and gas sensors."""
+        if user_input is not None:
+            self._data.update(_clean(user_input))
+            return await self.async_step_electricity_tariffs()
+
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_SOLAR_KWH): SENSOR_SELECTOR,
+                vol.Optional(CONF_SOLAR_W): SENSOR_SELECTOR,
+                vol.Optional(CONF_CONSUMPTION_W): SENSOR_SELECTOR,
+                vol.Optional(CONF_CONSUMPTION_KWH): SENSOR_SELECTOR,
+                vol.Optional(CONF_GAS_DAILY_M3): SENSOR_SELECTOR,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="other_sensors",
+            data_schema=schema,
+            last_step=False,
         )
 
     async def async_step_electricity_tariffs(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Step 3: Electricity tariffs."""
+        """Step 4: Electricity tariffs."""
         if user_input is not None:
             self._data.update(user_input)
             return await self.async_step_fixed_costs()
@@ -190,15 +197,13 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="electricity_tariffs",
             data_schema=schema,
-            description_placeholders={
-                "title": "Stap 3/4: Stroom tarieven (incl. BTW)"
-            },
+            last_step=False,
         )
 
     async def async_step_fixed_costs(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Step 4: Fixed daily costs and gas tariff."""
+        """Step 5: Fixed daily costs and gas tariff."""
         if user_input is not None:
             self._data.update(user_input)
             return self.async_create_entry(
@@ -263,9 +268,6 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="fixed_costs",
             data_schema=schema,
-            description_placeholders={
-                "title": "Stap 4/4: Vaste kosten & gastarieven (incl. BTW)"
-            },
         )
 
     @staticmethod
@@ -288,7 +290,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Manage options: update tariffs and fixed costs."""
+        """Manage options: update tariffs."""
         if user_input is not None:
             self._data.update(user_input)
             return await self.async_step_fixed_costs_options()
@@ -344,7 +346,11 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
             }
         )
 
-        return self.async_show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=schema,
+            last_step=False,
+        )
 
     async def async_step_fixed_costs_options(
         self, user_input: dict[str, Any] | None = None
@@ -352,7 +358,6 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
         """Options step 2: fixed costs."""
         if user_input is not None:
             self._data.update(user_input)
-            # Save merged data back as options — we update the config entry data
             return self.async_create_entry(title="", data=self._data)
 
         data = self._data
