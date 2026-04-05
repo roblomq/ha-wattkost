@@ -33,7 +33,8 @@
         "title": "Stroomtarieven (incl. BTW)",
         "data": {
           "use_saldering": "Saldering actief",
-          "saldo_start_date": "Startdatum contractjaar (MM-DD)",
+          "saldo_start_month": "Startmaand contractjaar",
+          "saldo_start_day": "Startdag contractjaar",
           "use_single_tariff": "Enkeltarief",
           "tariff_enkel": "Enkeltarief €/kWh",
           "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
@@ -43,7 +44,8 @@
         },
         "data_description": {
           "use_saldering": "Schakel uit als de salderingsregeling niet meer van toepassing is (afschaffing verwacht per 2027). Bij saldering wordt export eerst verrekend met import tegen het importtarief.",
-          "saldo_start_date": "De startdatum van je energiecontractjaar, in het formaat MM-DD (bijv. 04-01 voor 1 april). Wordt gebruikt voor de salderingsbalans en de geschatte jaarafrekening. Kijk op je energiecontract voor de ingangsdatum.",
+          "saldo_start_month": "De maand (1–12) waarop je energiecontractjaar begint. Staat op je energiecontract.",
+          "saldo_start_day": "De dag (1–31) waarop je energiecontractjaar begint. Staat op je energiecontract.",
           "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
           "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
           "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
@@ -79,7 +81,8 @@
         "title": "Stroomtarieven aanpassen (incl. BTW)",
         "data": {
           "use_saldering": "Saldering actief",
-          "saldo_start_date": "Startdatum contractjaar (MM-DD)",
+          "saldo_start_month": "Startmaand contractjaar",
+          "saldo_start_day": "Startdag contractjaar",
           "use_single_tariff": "Enkeltarief",
           "tariff_enkel": "Enkeltarief €/kWh",
           "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
@@ -89,7 +92,8 @@
         },
         "data_description": {
           "use_saldering": "Schakel uit als de salderingsregeling niet meer van toepassing is (afschaffing verwacht per 2027). Bij saldering wordt export eerst verrekend met import tegen het importtarief.",
-          "saldo_start_date": "De startdatum van je energiecontractjaar, in het formaat MM-DD (bijv. 04-01 voor 1 april). Wordt gebruikt voor de salderingsbalans en de geschatte jaarafrekening. Kijk op je energiecontract voor de ingangsdatum.",
+          "saldo_start_month": "De maand (1–12) waarop je energiecontractjaar begint. Staat op je energiecontract.",
+          "saldo_start_day": "De dag (1–31) waarop je energiecontractjaar begint. Staat op je energiecontract.",
           "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
           "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
           "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",

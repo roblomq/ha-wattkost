@@ -84,7 +84,8 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 | Parameter | Standaardwaarde | Beschrijving |
 |-----------|----------------|--------------|
 | Saldering actief | Aan | Schakel uit als saldering per 2027 wordt afgeschaft. Bij saldering wordt export verrekend tegen het importtarief (niet het lagere teruglevertarief). |
-| Startdatum contractjaar | 01-01 | Ingangsdatum van je energiecontract in MM-DD formaat (bijv. 04-01 voor 1 april). Staat op je energiecontract. Wordt gebruikt voor de salderingsbalans en jaarafrekening. |
+| Startmaand contractjaar | 1 | Maand (1–12) waarop je energiecontract ingaat. Staat op je energiecontract. |
+| Startdag contractjaar | 1 | Dag (1–31) waarop je energiecontract ingaat. Staat op je energiecontract. |
 | Enkeltarief | € 0,21532 /kWh | All-in tarief als je meter geen dag/nacht onderscheid maakt |
 | Normaaltarief (T1/dag) | € 0,20927 /kWh | All-in tarief tijdens normaaluren (overdag) |
 | Daltarief (T2/nacht) | € 0,22137 /kWh | All-in tarief tijdens daluren (nacht/weekend) |

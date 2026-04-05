@@ -28,7 +28,8 @@ from .const import (
     CONF_GAS_DAILY_M3,
     CONF_USE_SINGLE_TARIFF,
     CONF_USE_SALDERING,
-    CONF_SALDO_START_DATE,
+    CONF_SALDO_START_MONTH,
+    CONF_SALDO_START_DAY,
     CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
@@ -47,7 +48,8 @@ from .const import (
     DEFAULT_TARIFF_RETURN_COST,
     DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_USE_SALDERING,
-    DEFAULT_SALDO_START_DATE,
+    DEFAULT_SALDO_START_MONTH,
+    DEFAULT_SALDO_START_DAY,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
     DEFAULT_ENERGY_REDUCTION_DAY,
@@ -161,9 +163,18 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_USE_SALDERING, default=DEFAULT_USE_SALDERING
                 ): selector.BooleanSelector(),
                 vol.Required(
-                    CONF_SALDO_START_DATE, default=DEFAULT_SALDO_START_DATE
-                ): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                    CONF_SALDO_START_MONTH, default=DEFAULT_SALDO_START_MONTH
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=12, step=1, mode="box"
+                    )
+                ),
+                vol.Required(
+                    CONF_SALDO_START_DAY, default=DEFAULT_SALDO_START_DAY
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=31, step=1, mode="box"
+                    )
                 ),
                 vol.Required(
                     CONF_USE_SINGLE_TARIFF, default=DEFAULT_USE_SINGLE_TARIFF
@@ -316,10 +327,20 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING),
                 ): selector.BooleanSelector(),
                 vol.Required(
-                    CONF_SALDO_START_DATE,
-                    default=data.get(CONF_SALDO_START_DATE, DEFAULT_SALDO_START_DATE),
-                ): selector.TextSelector(
-                    selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+                    CONF_SALDO_START_MONTH,
+                    default=data.get(CONF_SALDO_START_MONTH, DEFAULT_SALDO_START_MONTH),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=12, step=1, mode="box"
+                    )
+                ),
+                vol.Required(
+                    CONF_SALDO_START_DAY,
+                    default=data.get(CONF_SALDO_START_DAY, DEFAULT_SALDO_START_DAY),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=31, step=1, mode="box"
+                    )
                 ),
                 vol.Required(
                     CONF_USE_SINGLE_TARIFF,

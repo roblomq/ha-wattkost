@@ -40,7 +40,8 @@ from .const import (
     CONF_GAS_DAILY_M3,
     CONF_USE_SINGLE_TARIFF,
     CONF_USE_SALDERING,
-    CONF_SALDO_START_DATE,
+    CONF_SALDO_START_MONTH,
+    CONF_SALDO_START_DAY,
     CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
@@ -59,7 +60,8 @@ from .const import (
     DEFAULT_TARIFF_RETURN_COST,
     DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_USE_SALDERING,
-    DEFAULT_SALDO_START_DATE,
+    DEFAULT_SALDO_START_MONTH,
+    DEFAULT_SALDO_START_DAY,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
     DEFAULT_ENERGY_REDUCTION_DAY,
@@ -85,15 +87,6 @@ def _safe_float(hass: HomeAssistant, entity_id: str | None) -> float | None:
         return float(state.state)
     except (ValueError, TypeError):
         return None
-
-
-def _parse_start_date(start_date_str: str) -> tuple[int, int]:
-    """Parse MM-DD string to (month, day) tuple."""
-    try:
-        parts = start_date_str.split("-")
-        return int(parts[0]), int(parts[1])
-    except Exception:
-        return 1, 1
 
 
 def _contract_year_start(now: datetime.datetime, start_month: int, start_day: int) -> datetime.datetime:
@@ -541,8 +534,8 @@ class NLEnergyCostCoordinator:
     async def _async_load_or_fetch_year_start(self) -> None:
         """Load persisted year-start values or fetch from recorder history."""
         now = dt_util.now()
-        start_str = self._get(CONF_SALDO_START_DATE, DEFAULT_SALDO_START_DATE)
-        start_month, start_day = _parse_start_date(start_str)
+        start_month = int(self._get(CONF_SALDO_START_MONTH, DEFAULT_SALDO_START_MONTH))
+        start_day = int(self._get(CONF_SALDO_START_DAY, DEFAULT_SALDO_START_DAY))
         self._contract_year_start_dt = _contract_year_start(now, start_month, start_day)
 
         # Try loading from persistent storage first
@@ -657,8 +650,8 @@ class NLEnergyCostCoordinator:
 
         # Contract year rollover
         if self._contract_year_start_dt is not None:
-            start_str = self._get(CONF_SALDO_START_DATE, DEFAULT_SALDO_START_DATE)
-            start_month, start_day = _parse_start_date(start_str)
+            start_month = int(self._get(CONF_SALDO_START_MONTH, DEFAULT_SALDO_START_MONTH))
+            start_day = int(self._get(CONF_SALDO_START_DAY, DEFAULT_SALDO_START_DAY))
             new_year_start = _contract_year_start(now, start_month, start_day)
             if new_year_start != self._contract_year_start_dt:
                 self._contract_year_start_dt = new_year_start
