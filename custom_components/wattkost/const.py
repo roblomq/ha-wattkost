@@ -37,6 +37,10 @@ CONF_USE_SINGLE_TARIFF = "use_single_tariff"   # True = enkel tarief, False = no
 CONF_USE_SALDERING = "use_saldering"
 DEFAULT_USE_SALDERING = True
 
+# Jaarafrekening startdatum (contractdatum, formaat "MM-DD")
+CONF_SALDO_START_DATE = "saldo_start_date"
+DEFAULT_SALDO_START_DATE = "01-01"
+
 # Fixed daily costs electricity (incl. BTW)
 CONF_FIXED_DELIVERY_DAY_ELECTRICITY = "fixed_delivery_day_electricity"    # € per dag
 CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY = "system_operator_day_electricity"  # € per dag

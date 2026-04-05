@@ -84,6 +84,7 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 | Parameter | Standaardwaarde | Beschrijving |
 |-----------|----------------|--------------|
 | Saldering actief | Aan | Schakel uit als saldering per 2027 wordt afgeschaft. Bij saldering wordt export verrekend tegen het importtarief (niet het lagere teruglevertarief). |
+| Startdatum contractjaar | 01-01 | Ingangsdatum van je energiecontract in MM-DD formaat (bijv. 04-01 voor 1 april). Staat op je energiecontract. Wordt gebruikt voor de salderingsbalans en jaarafrekening. |
 | Enkeltarief | € 0,21532 /kWh | All-in tarief als je meter geen dag/nacht onderscheid maakt |
 | Normaaltarief (T1/dag) | € 0,20927 /kWh | All-in tarief tijdens normaaluren (overdag) |
 | Daltarief (T2/nacht) | € 0,22137 /kWh | All-in tarief tijdens daluren (nacht/weekend) |
@@ -121,13 +122,15 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 | `sensor.totale_dagkosten_energie` | € | Stroom + gas vandaag |
 | `sensor.totale_maandkosten_energie` | € | Stroom + gas deze maand |
 
-### Salderingsbalans (jaarbasis)
+### Salderingsbalans (contractjaar)
 | Sensor | Eenheid | Beschrijving |
 |--------|---------|--------------|
-| `sensor.saldo_import_dit_jaar` | kWh | Totaal geïmporteerde kWh dit kalenderjaar |
-| `sensor.saldo_export_dit_jaar` | kWh | Totaal teruggeleverde kWh dit kalenderjaar |
+| `sensor.saldo_import_dit_jaar` | kWh | Totaal geïmporteerde kWh dit contractjaar (vanaf startdatum contract) |
+| `sensor.saldo_export_dit_jaar` | kWh | Totaal teruggeleverde kWh dit contractjaar |
 | `sensor.saldo_netto_dit_jaar` | kWh | Netto saldo (import − export). Negatief = netto terugleveraar |
-| `sensor.geschatte_jaarafrekening_stroom` | € | Wat de stroomafrekening zou zijn als het jaar nu eindigt (incl. vaste kosten en saldering) |
+| `sensor.geschatte_jaarafrekening_stroom` | € | Wat de stroomafrekening zou zijn als het contractjaar nu eindigt (incl. vaste kosten en saldering) |
+
+> **Technische noot:** De startwaarden van de meters op de contractstartdatum worden opgehaald uit de HA recorder (historische data). Als er geen historische data beschikbaar is (bijv. bij een nieuwe installatie), worden de huidige meterwaarden als startpunt gebruikt. De startwaarden worden lokaal opgeslagen zodat ze HA-herstarts overleven. Alle sensoren worden elke 5 minuten bijgewerkt om de databasegroei te beperken.
 
 ---
 
