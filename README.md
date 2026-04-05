@@ -83,10 +83,11 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 
 | Parameter | Standaardwaarde | Beschrijving |
 |-----------|----------------|--------------|
+| Saldering actief | Aan | Schakel uit als saldering per 2027 wordt afgeschaft. Bij saldering wordt export verrekend tegen het importtarief (niet het lagere teruglevertarief). |
 | Enkeltarief | € 0,21532 /kWh | All-in tarief als je meter geen dag/nacht onderscheid maakt |
 | Normaaltarief (T1/dag) | € 0,20927 /kWh | All-in tarief tijdens normaaluren (overdag) |
 | Daltarief (T2/nacht) | € 0,22137 /kWh | All-in tarief tijdens daluren (nacht/weekend) |
-| Terugleververgoeding | € 0,16000 /kWh *excl.* BTW | Vergoeding die je ontvangt per kWh teruggeleverde stroom |
+| Terugleververgoeding | € 0,16000 /kWh *excl.* BTW | Vergoeding die je ontvangt per kWh surplus teruggeleverde stroom (meer dan je hebt verbruikt) |
 | Terugleveerkosten | € 0,15488 /kWh | Kosten die je betaalt per kWh teruggeleverde stroom |
 
 ### Stap 5 — Vaste kosten & gastarieven (incl. BTW)
@@ -104,12 +105,13 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 
 ## Gegenereerde sensoren
 
+### Actuele & dagwaarden
 | Sensor | Eenheid | Beschrijving |
 |--------|---------|--------------|
 | `sensor.stroom_actuele_kosten` | €/h | Huidig stroomverbruik in kosten per uur |
 | `sensor.stroom_actueel_importtarief` | €/kWh | Huidig importtarief (incl. BTW) |
 | `sensor.stroom_actueel_teruglevertarief` | €/kWh | Netto teruglevertarief (vergoeding − kosten) |
-| `sensor.stroom_variabele_dagkosten` | € | Variabele kosten vandaag (import − teruglevercredit) |
+| `sensor.stroom_variabele_dagkosten` | € | Variabele kosten vandaag (met saldering verrekend) |
 | `sensor.stroom_vaste_dagkosten` | € | Vaste leveringskosten + systeembeheer + reductie vandaag |
 | `sensor.stroom_totale_dagkosten` | € | Variabel + vast vandaag |
 | `sensor.stroom_maandkosten` | € | Totale stroomkosten deze maand |
@@ -118,6 +120,14 @@ Voorbeeldwaarden als standaard (Nederlandse gemiddelden, incl. BTW, 2026):
 | `sensor.gas_maandkosten` | € | Totale gaskosten deze maand |
 | `sensor.totale_dagkosten_energie` | € | Stroom + gas vandaag |
 | `sensor.totale_maandkosten_energie` | € | Stroom + gas deze maand |
+
+### Salderingsbalans (jaarbasis)
+| Sensor | Eenheid | Beschrijving |
+|--------|---------|--------------|
+| `sensor.saldo_import_dit_jaar` | kWh | Totaal geïmporteerde kWh dit kalenderjaar |
+| `sensor.saldo_export_dit_jaar` | kWh | Totaal teruggeleverde kWh dit kalenderjaar |
+| `sensor.saldo_netto_dit_jaar` | kWh | Netto saldo (import − export). Negatief = netto terugleveraar |
+| `sensor.geschatte_jaarafrekening_stroom` | € | Wat de stroomafrekening zou zijn als het jaar nu eindigt (incl. vaste kosten en saldering) |
 
 ---
 
