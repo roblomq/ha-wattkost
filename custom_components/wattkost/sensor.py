@@ -36,6 +36,8 @@ from .const import (
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
     CONF_USE_SINGLE_TARIFF,
+    CONF_USE_SALDERING,
+    DEFAULT_USE_SALDERING,
     CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
@@ -90,6 +92,50 @@ async def async_setup_entry(
     coordinator = NLEnergyCostCoordinator(hass, config, entry.entry_id)
 
     sensors = [
+        NLEnergyCostSensor(
+            coordinator=coordinator,
+            entry_id=entry.entry_id,
+            key="saldo_import_jaar_kwh",
+            name="Saldo import dit jaar",
+            unit="kWh",
+            icon="mdi:transmission-tower-import",
+            device_class=SensorDeviceClass.ENERGY,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            value_fn=lambda c: c.saldo_import_jaar_kwh,
+        ),
+        NLEnergyCostSensor(
+            coordinator=coordinator,
+            entry_id=entry.entry_id,
+            key="saldo_export_jaar_kwh",
+            name="Saldo export dit jaar",
+            unit="kWh",
+            icon="mdi:transmission-tower-export",
+            device_class=SensorDeviceClass.ENERGY,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            value_fn=lambda c: c.saldo_export_jaar_kwh,
+        ),
+        NLEnergyCostSensor(
+            coordinator=coordinator,
+            entry_id=entry.entry_id,
+            key="saldo_netto_jaar_kwh",
+            name="Saldo netto dit jaar",
+            unit="kWh",
+            icon="mdi:scale-balance",
+            device_class=SensorDeviceClass.ENERGY,
+            state_class=SensorStateClass.MEASUREMENT,
+            value_fn=lambda c: c.saldo_netto_jaar_kwh,
+        ),
+        NLEnergyCostSensor(
+            coordinator=coordinator,
+            entry_id=entry.entry_id,
+            key="saldo_kosten_jaarafrekening",
+            name="Geschatte jaarafrekening stroom",
+            unit="€",
+            icon="mdi:cash-clock",
+            device_class=SensorDeviceClass.MONETARY,
+            state_class=SensorStateClass.MEASUREMENT,
+            value_fn=lambda c: c.saldo_kosten_jaarafrekening,
+        ),
         NLEnergyCostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
@@ -265,7 +311,20 @@ class NLEnergyCostCoordinator:
         self._day_start_gas: float | None = None
         self._current_month: int = dt_util.now().month
 
+        # Year tracking (salderingsbalans)
+        self._year_start_import_t1: float | None = None
+        self._year_start_import_t2: float | None = None
+        self._year_start_export_t1: float | None = None
+        self._year_start_export_t2: float | None = None
+        self._year_start_import_total: float | None = None
+        self._year_start_export_total: float | None = None
+        self._current_year: int = dt_util.now().year
+
         # Computed values
+        self.saldo_import_jaar_kwh: float | None = None
+        self.saldo_export_jaar_kwh: float | None = None
+        self.saldo_netto_jaar_kwh: float | None = None
+        self.saldo_kosten_jaarafrekening: float | None = None
         self.electricity_current_cost_eur_h: float | None = None
         self.current_import_rate: float | None = None
         self.current_export_rate: float | None = None
@@ -416,6 +475,35 @@ class NLEnergyCostCoordinator:
         self._month_start_export_total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
         self._month_start_gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
 
+    def _snapshot_year_start(self) -> None:
+        """Snapshot current sensor values as the year-start baseline."""
+        self._year_start_import_t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
+        self._year_start_import_t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
+        self._year_start_export_t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
+        self._year_start_export_t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
+        self._year_start_import_total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
+        self._year_start_export_total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
+
+    def _kwh_import_year(self) -> float:
+        t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
+        total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
+        if t1 is not None and t2 is not None:
+            return max(0.0, (t1 - (self._year_start_import_t1 or t1)) + (t2 - (self._year_start_import_t2 or t2)))
+        if total is not None:
+            return max(0.0, total - (self._year_start_import_total or total))
+        return 0.0
+
+    def _kwh_export_year(self) -> float:
+        t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
+        total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
+        if t1 is not None and t2 is not None:
+            return max(0.0, (t1 - (self._year_start_export_t1 or t1)) + (t2 - (self._year_start_export_t2 or t2)))
+        if total is not None:
+            return max(0.0, total - (self._year_start_export_total or total))
+        return 0.0
+
     def update(self) -> None:
         """Recompute all cost sensors."""
         now = dt_util.now()
@@ -431,11 +519,18 @@ class NLEnergyCostCoordinator:
             self._snapshot_month_start()
             self._current_month = now.month
 
+        # Year rollover
+        if now.year != self._current_year:
+            self._snapshot_year_start()
+            self._current_year = now.year
+
         # Initialize baselines on first run
         if self._day_start_import_t1 is None and self._day_start_import_total is None:
             self._snapshot_day_start()
         if self._month_start_import_t1 is None and self._month_start_import_total is None:
             self._snapshot_month_start()
+        if self._year_start_import_t1 is None and self._year_start_import_total is None:
+            self._snapshot_year_start()
 
         # --- Current rate & instantaneous cost ---
         import_w = _safe_float(self.hass, self._get(CONF_IMPORT_W))
@@ -457,15 +552,18 @@ class NLEnergyCostCoordinator:
         # --- Daily variable costs ---
         kwh_import = self._kwh_import_today()
         kwh_export = self._kwh_export_today()
+        use_saldering = self._get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING)
 
-        # Saldering: export saldeert eerst tegen import tegen hetzelfde importtarief.
-        # Alleen surplus export (meer dan import) krijgt de lagere terugleververgoeding.
-        if kwh_export <= kwh_import:
-            net_import = kwh_import - kwh_export
-            daily_variable = net_import * self._import_rate
+        if use_saldering:
+            # Saldering: export saldeert eerst tegen import tegen hetzelfde importtarief.
+            # Alleen surplus export (meer dan import) krijgt de lagere terugleververgoeding.
+            if kwh_export <= kwh_import:
+                daily_variable = (kwh_import - kwh_export) * self._import_rate
+            else:
+                daily_variable = -(kwh_export - kwh_import) * self._return_rate
         else:
-            surplus = kwh_export - kwh_import
-            daily_variable = -(surplus * self._return_rate)
+            # Zonder saldering: import en export apart verrekenen
+            daily_variable = (kwh_import * self._import_rate) - (kwh_export * self._return_rate)
         self.electricity_daily_variable_cost = round(daily_variable, 4)
         self.net_daily_kwh = round(kwh_import - kwh_export, 4)
 
@@ -486,13 +584,31 @@ class NLEnergyCostCoordinator:
             else 31
         )
         monthly_fixed = self._fixed_day_electricity * days_in_month
-        if kwh_export_m <= kwh_import_m:
-            net_import_m = kwh_import_m - kwh_export_m
-            monthly_variable = net_import_m * self._import_rate
+        if use_saldering:
+            if kwh_export_m <= kwh_import_m:
+                monthly_variable = (kwh_import_m - kwh_export_m) * self._import_rate
+            else:
+                monthly_variable = -(kwh_export_m - kwh_import_m) * self._return_rate
         else:
-            surplus_m = kwh_export_m - kwh_import_m
-            monthly_variable = -(surplus_m * self._return_rate)
+            monthly_variable = (kwh_import_m * self._import_rate) - (kwh_export_m * self._return_rate)
         self.electricity_monthly_cost = round(monthly_fixed + monthly_variable, 4)
+
+        # --- Salderingsbalans jaar ---
+        kwh_import_y = self._kwh_import_year()
+        kwh_export_y = self._kwh_export_year()
+        self.saldo_import_jaar_kwh = round(kwh_import_y, 3)
+        self.saldo_export_jaar_kwh = round(kwh_export_y, 3)
+        self.saldo_netto_jaar_kwh = round(kwh_import_y - kwh_export_y, 3)
+        if use_saldering:
+            if kwh_export_y <= kwh_import_y:
+                saldo_var = (kwh_import_y - kwh_export_y) * self._import_rate
+            else:
+                saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
+        else:
+            saldo_var = (kwh_import_y * self._import_rate) - (kwh_export_y * self._return_rate)
+        days_in_year = 366 if now.year % 4 == 0 else 365
+        yearly_fixed = self._fixed_day_electricity * days_in_year
+        self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed, 2)
 
         # --- Gas ---
         gas_tariff = float(self._get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))

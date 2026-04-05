@@ -27,6 +27,7 @@ from .const import (
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
     CONF_USE_SINGLE_TARIFF,
+    CONF_USE_SALDERING,
     CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
@@ -44,6 +45,7 @@ from .const import (
     DEFAULT_TARIFF_RETURN,
     DEFAULT_TARIFF_RETURN_COST,
     DEFAULT_USE_SINGLE_TARIFF,
+    DEFAULT_USE_SALDERING,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
     DEFAULT_ENERGY_REDUCTION_DAY,
@@ -153,6 +155,9 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_USE_SALDERING, default=DEFAULT_USE_SALDERING
+                ): selector.BooleanSelector(),
                 vol.Required(
                     CONF_USE_SINGLE_TARIFF, default=DEFAULT_USE_SINGLE_TARIFF
                 ): selector.BooleanSelector(),
@@ -299,6 +304,10 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_USE_SALDERING,
+                    default=data.get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING),
+                ): selector.BooleanSelector(),
                 vol.Required(
                     CONF_USE_SINGLE_TARIFF,
                     default=data.get(CONF_USE_SINGLE_TARIFF, DEFAULT_USE_SINGLE_TARIFF),

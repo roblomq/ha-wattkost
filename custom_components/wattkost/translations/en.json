@@ -32,6 +32,7 @@
       "electricity_tariffs": {
         "title": "Electricity tariffs (incl. VAT)",
         "data": {
+          "use_saldering": "Net metering active",
           "use_single_tariff": "Single tariff",
           "tariff_enkel": "Single tariff €/kWh",
           "tariff_normaal": "Normal tariff €/kWh (T1/day)",
@@ -40,6 +41,7 @@
           "tariff_return_cost": "Return delivery costs €/kWh (incl. VAT)"
         },
         "data_description": {
+          "use_saldering": "Disable if net metering no longer applies (abolishment expected from 2027). With net metering, export first offsets import at the import rate.",
           "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
           "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
           "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",
@@ -74,6 +76,7 @@
       "init": {
         "title": "Update electricity tariffs (incl. VAT)",
         "data": {
+          "use_saldering": "Net metering active",
           "use_single_tariff": "Single tariff",
           "tariff_enkel": "Single tariff €/kWh",
           "tariff_normaal": "Normal tariff €/kWh (T1/day)",
@@ -82,6 +85,7 @@
           "tariff_return_cost": "Return delivery costs €/kWh (incl. VAT)"
         },
         "data_description": {
+          "use_saldering": "Disable if net metering no longer applies (abolishment expected from 2027). With net metering, export first offsets import at the import rate.",
           "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
           "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
           "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",

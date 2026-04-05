@@ -32,6 +32,7 @@
       "electricity_tariffs": {
         "title": "Stroomtarieven (incl. BTW)",
         "data": {
+          "use_saldering": "Saldering actief",
           "use_single_tariff": "Enkeltarief",
           "tariff_enkel": "Enkeltarief €/kWh",
           "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
@@ -40,6 +41,7 @@
           "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
         },
         "data_description": {
+          "use_saldering": "Schakel uit als de salderingsregeling niet meer van toepassing is (afschaffing verwacht per 2027). Bij saldering wordt export eerst verrekend met import tegen het importtarief.",
           "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
           "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
           "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
@@ -74,6 +76,7 @@
       "init": {
         "title": "Stroomtarieven aanpassen (incl. BTW)",
         "data": {
+          "use_saldering": "Saldering actief",
           "use_single_tariff": "Enkeltarief",
           "tariff_enkel": "Enkeltarief €/kWh",
           "tariff_normaal": "Normaaltarief €/kWh (T1/dag)",
@@ -82,6 +85,7 @@
           "tariff_return_cost": "Terugleveerkosten €/kWh (incl. BTW)"
         },
         "data_description": {
+          "use_saldering": "Schakel uit als de salderingsregeling niet meer van toepassing is (afschaffing verwacht per 2027). Bij saldering wordt export eerst verrekend met import tegen het importtarief.",
           "use_single_tariff": "Kies enkeltarief als je meter geen dag/nacht onderscheid maakt (geen T1/T2 splitsing).",
           "tariff_enkel": "Het all-in tarief per kWh stroom dat je betaalt, inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",
           "tariff_normaal": "Het all-in tarief per kWh stroom tijdens normaaluren (overdag, T1), inclusief BTW. Bestaat uit leveringstarief + energiebelasting + BTW.",

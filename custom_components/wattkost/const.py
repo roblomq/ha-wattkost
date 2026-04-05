@@ -33,6 +33,10 @@ CONF_TARIFF_RETURN_COST = "tariff_return_cost" # € per kWh incl. BTW (teruglev
 # Electricity: use enkel or normaal/dal split
 CONF_USE_SINGLE_TARIFF = "use_single_tariff"   # True = enkel tarief, False = normaal/dal
 
+# Saldering: verrekening export tegen import (uitschakelbaar voor na 2027)
+CONF_USE_SALDERING = "use_saldering"
+DEFAULT_USE_SALDERING = True
+
 # Fixed daily costs electricity (incl. BTW)
 CONF_FIXED_DELIVERY_DAY_ELECTRICITY = "fixed_delivery_day_electricity"    # € per dag
 CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY = "system_operator_day_electricity"  # € per dag
