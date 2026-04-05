@@ -606,9 +606,11 @@ class NLEnergyCostCoordinator:
                 saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
         else:
             saldo_var = (kwh_import_y * self._import_rate) - (kwh_export_y * self._return_rate)
-        days_in_year = 366 if now.year % 4 == 0 else 365
-        yearly_fixed = self._fixed_day_electricity * days_in_year
-        self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed, 2)
+        day_of_year = now.timetuple().tm_yday
+        # Fixed costs: pro-rated for days elapsed this year
+        yearly_fixed_ytd = self._fixed_day_electricity * day_of_year
+        # Variable costs: year-to-date actual (no extrapolation)
+        self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed_ytd, 2)
 
         # --- Gas ---
         gas_tariff = float(self._get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))
