@@ -458,9 +458,15 @@ class NLEnergyCostCoordinator:
         kwh_import = self._kwh_import_today()
         kwh_export = self._kwh_export_today()
 
-        import_cost = kwh_import * self._import_rate
-        export_credit = kwh_export * self._return_rate
-        self.electricity_daily_variable_cost = round(import_cost - export_credit, 4)
+        # Saldering: export saldeert eerst tegen import tegen hetzelfde importtarief.
+        # Alleen surplus export (meer dan import) krijgt de lagere terugleververgoeding.
+        if kwh_export <= kwh_import:
+            net_import = kwh_import - kwh_export
+            daily_variable = net_import * self._import_rate
+        else:
+            surplus = kwh_export - kwh_import
+            daily_variable = -(surplus * self._return_rate)
+        self.electricity_daily_variable_cost = round(daily_variable, 4)
         self.net_daily_kwh = round(kwh_import - kwh_export, 4)
 
         # Daily fixed
@@ -480,7 +486,12 @@ class NLEnergyCostCoordinator:
             else 31
         )
         monthly_fixed = self._fixed_day_electricity * days_in_month
-        monthly_variable = (kwh_import_m * self._import_rate) - (kwh_export_m * self._return_rate)
+        if kwh_export_m <= kwh_import_m:
+            net_import_m = kwh_import_m - kwh_export_m
+            monthly_variable = net_import_m * self._import_rate
+        else:
+            surplus_m = kwh_export_m - kwh_import_m
+            monthly_variable = -(surplus_m * self._return_rate)
         self.electricity_monthly_cost = round(monthly_fixed + monthly_variable, 4)
 
         # --- Gas ---
