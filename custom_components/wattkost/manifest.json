@@ -6,6 +6,7 @@
   "documentation": "https://github.com/roblomq/ha-wattkost",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/roblomq/ha-wattkost/issues",
+  "after_dependencies": ["recorder"],
   "requirements": [],
-  "version": "1.1.10"
+  "version": "1.1.11"
 }

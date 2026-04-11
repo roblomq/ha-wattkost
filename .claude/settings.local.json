@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(git rebase:*)",
+      "Bash(git tag:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh release:*)",
+      "Bash(winget install:*)",
+      "Bash(gh auth:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" auth login --web --git-protocol https)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.2 --title \"v1.1.2\" --notes \"Rename component domain from nl_energy_cost to wattkost, fix hacs.json\")",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.4 --title \"v1.1.4\" --notes \"Change energy tax reduction input from €/year to €/day\")",
+      "Bash(git fetch:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release delete v1.1.4 --yes)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.4 --title \"v1.1.4\" --notes \"Change energy tax reduction input from €/year to €/day; fix manifest.json\")",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.5 --title \"v1.1.5\" --notes \"Add descriptions to all tariff and cost fields in the config flow wizard\")",
+      "WebSearch",
+      "WebFetch(domain:www.greenchoice.nl)",
+      "WebFetch(domain:media.greenchoice.nl)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.6 --title \"v1.1.6\" --notes \"Fix saldering: export now correctly credited at import rate \\(not the lower return rate\\) up to the amount imported. Only surplus export gets the terugleververgoeding.\")",
+      "Bash(python -c \"import json; json.load\\(open\\('custom_components/wattkost/strings.json'\\)\\)\")",
+      "Bash(python -c \"import json; json.load\\(open\\('custom_components/wattkost/translations/nl.json'\\)\\)\")",
+      "Bash(git commit:*)"
+    ]
+  }
+}
