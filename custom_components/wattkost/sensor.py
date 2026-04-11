@@ -455,25 +455,39 @@ class NLEnergyCostCoordinator:
             return max(0.0, total - (self._month_start_export_total or total))
         return 0.0
 
-    def _kwh_import_year(self) -> float:
+    def _kwh_import_year(self) -> float | None:
         t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
         t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
         total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            return max(0.0, (t1 - (self._year_start_import_t1 or t1)) + (t2 - (self._year_start_import_t2 or t2)))
+            s1 = self._year_start_import_t1
+            s2 = self._year_start_import_t2
+            if s1 is None or s2 is None:
+                return None
+            return max(0.0, (t1 - s1) + (t2 - s2))
         if total is not None:
-            return max(0.0, total - (self._year_start_import_total or total))
-        return 0.0
+            s = self._year_start_import_total
+            if s is None:
+                return None
+            return max(0.0, total - s)
+        return None
 
-    def _kwh_export_year(self) -> float:
+    def _kwh_export_year(self) -> float | None:
         t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
         t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
         total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            return max(0.0, (t1 - (self._year_start_export_t1 or t1)) + (t2 - (self._year_start_export_t2 or t2)))
+            s1 = self._year_start_export_t1
+            s2 = self._year_start_export_t2
+            if s1 is None or s2 is None:
+                return None
+            return max(0.0, (t1 - s1) + (t2 - s2))
         if total is not None:
-            return max(0.0, total - (self._year_start_export_total or total))
-        return 0.0
+            s = self._year_start_export_total
+            if s is None:
+                return None
+            return max(0.0, total - s)
+        return None
 
     def _gas_today_m3(self) -> float:
         gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
@@ -723,25 +737,31 @@ class NLEnergyCostCoordinator:
         # --- Salderingsbalans contract jaar ---
         kwh_import_y = self._kwh_import_year()
         kwh_export_y = self._kwh_export_year()
-        self.saldo_import_jaar_kwh = round(kwh_import_y, 2)
-        self.saldo_export_jaar_kwh = round(kwh_export_y, 2)
-        self.saldo_netto_jaar_kwh = round(kwh_import_y - kwh_export_y, 2)
+        self.saldo_import_jaar_kwh = round(kwh_import_y, 2) if kwh_import_y is not None else None
+        self.saldo_export_jaar_kwh = round(kwh_export_y, 2) if kwh_export_y is not None else None
+        if kwh_import_y is not None and kwh_export_y is not None:
+            self.saldo_netto_jaar_kwh = round(kwh_import_y - kwh_export_y, 2)
+        else:
+            self.saldo_netto_jaar_kwh = None
 
-        if use_saldering:
-            if kwh_export_y <= kwh_import_y:
-                saldo_var = (kwh_import_y - kwh_export_y) * self._import_rate
+        if kwh_import_y is not None and kwh_export_y is not None:
+            if use_saldering:
+                if kwh_export_y <= kwh_import_y:
+                    saldo_var = (kwh_import_y - kwh_export_y) * self._import_rate
+                else:
+                    saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
             else:
-                saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
-        else:
-            saldo_var = (kwh_import_y * self._import_rate) - (kwh_export_y * self._return_rate)
+                saldo_var = (kwh_import_y * self._import_rate) - (kwh_export_y * self._return_rate)
 
-        # Days elapsed since contract year start
-        if self._contract_year_start_dt is not None:
-            days_elapsed = max(1, (now - self._contract_year_start_dt).days)
+            # Days elapsed since contract year start
+            if self._contract_year_start_dt is not None:
+                days_elapsed = max(1, (now - self._contract_year_start_dt).days)
+            else:
+                days_elapsed = now.timetuple().tm_yday
+            yearly_fixed_ytd = self._fixed_day_electricity * days_elapsed
+            self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed_ytd, 2)
         else:
-            days_elapsed = now.timetuple().tm_yday
-        yearly_fixed_ytd = self._fixed_day_electricity * days_elapsed
-        self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed_ytd, 2)
+            self.saldo_kosten_jaarafrekening = None
 
         # --- Gas ---
         gas_tariff = float(self._get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))

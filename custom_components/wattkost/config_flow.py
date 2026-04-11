@@ -166,14 +166,14 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_SALDO_START_MONTH, default=DEFAULT_SALDO_START_MONTH
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=1, max=12, step=1, mode="box"
+                        min=1, max=12, step=1.0, mode="box"
                     )
                 ),
                 vol.Required(
                     CONF_SALDO_START_DAY, default=DEFAULT_SALDO_START_DAY
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=1, max=31, step=1, mode="box"
+                        min=1, max=31, step=1.0, mode="box"
                     )
                 ),
                 vol.Required(
@@ -428,7 +428,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                     default=data.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_DAY),
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
-                        min=-500, max=0, step="any", mode="box", unit_of_measurement="€/jaar"
+                        min=-5, max=0, step="any", mode="box", unit_of_measurement="€/dag"
                     )
                 ),
                 vol.Required(
