@@ -24,14 +24,10 @@ CONF_SOLAR_W = "solar_w_sensor"
 CONF_GAS_DAILY_M3 = "gas_daily_m3_sensor"
 
 # Electricity tariff parameters (incl. BTW)
-CONF_TARIFF_ENKEL = "tariff_enkel"            # € per kWh incl. BTW
-CONF_TARIFF_NORMAAL = "tariff_normaal"         # € per kWh incl. BTW
-CONF_TARIFF_DAL = "tariff_dal"                 # € per kWh incl. BTW
+CONF_TARIFF_NORMAAL = "tariff_normaal"         # € per kWh incl. BTW (T1/dag, of enkeltarief)
+CONF_TARIFF_DAL = "tariff_dal"                 # € per kWh incl. BTW (T2/nacht)
 CONF_TARIFF_RETURN = "tariff_return"           # € per kWh excl. BTW (teruglevering)
 CONF_TARIFF_RETURN_COST = "tariff_return_cost" # € per kWh incl. BTW (terugleveerkosten)
-
-# Electricity: use enkel or normaal/dal split
-CONF_USE_SINGLE_TARIFF = "use_single_tariff"   # True = enkel tarief, False = normaal/dal
 
 # Saldering: verrekening export tegen import (uitschakelbaar voor na 2027)
 CONF_USE_SALDERING = "use_saldering"
@@ -56,12 +52,10 @@ CONF_FIXED_DELIVERY_DAY_GAS = "fixed_delivery_day_gas"      # € per dag
 CONF_SYSTEM_OPERATOR_DAY_GAS = "system_operator_day_gas"    # € per dag
 
 # Defaults — voorbeeldwaarden (incl. BTW, 2026)
-DEFAULT_TARIFF_ENKEL = 0.21532
-DEFAULT_TARIFF_NORMAAL = 0.20927
-DEFAULT_TARIFF_DAL = 0.22137
+DEFAULT_TARIFF_NORMAAL = 0.20927         # T1/dag (of enkeltarief: zelfde waarde voor T1 en T2)
+DEFAULT_TARIFF_DAL = 0.22137            # T2/nacht
 DEFAULT_TARIFF_RETURN = 0.16000          # excl. BTW
 DEFAULT_TARIFF_RETURN_COST = 0.15488     # incl. BTW (terugleveerkosten per kWh)
-DEFAULT_USE_SINGLE_TARIFF = True
 
 DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY = 0.30635
 DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY = 1.30970 / 30.4375   # € per jaar -> per dag

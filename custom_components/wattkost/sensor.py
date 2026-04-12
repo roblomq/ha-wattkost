@@ -37,11 +37,9 @@ from .const import (
     CONF_SOLAR_KWH,
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
-    CONF_USE_SINGLE_TARIFF,
     CONF_USE_SALDERING,
     CONF_SALDO_START_MONTH,
     CONF_SALDO_START_DAY,
-    CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
     CONF_TARIFF_RETURN,
@@ -52,12 +50,10 @@ from .const import (
     CONF_GAS_TARIFF,
     CONF_FIXED_DELIVERY_DAY_GAS,
     CONF_SYSTEM_OPERATOR_DAY_GAS,
-    DEFAULT_TARIFF_ENKEL,
     DEFAULT_TARIFF_NORMAAL,
     DEFAULT_TARIFF_DAL,
     DEFAULT_TARIFF_RETURN,
     DEFAULT_TARIFF_RETURN_COST,
-    DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_USE_SALDERING,
     DEFAULT_SALDO_START_MONTH,
     DEFAULT_SALDO_START_DAY,
@@ -379,10 +375,7 @@ class NLEnergyCostCoordinator:
         return self._cfg.get(key, default)
 
     @property
-    def _import_rate(self) -> float:
-        use_single = self._get(CONF_USE_SINGLE_TARIFF, DEFAULT_USE_SINGLE_TARIFF)
-        if use_single:
-            return float(self._get(CONF_TARIFF_ENKEL, DEFAULT_TARIFF_ENKEL))
+    def _normaal_rate(self) -> float:
         return float(self._get(CONF_TARIFF_NORMAAL, DEFAULT_TARIFF_NORMAAL))
 
     @property
@@ -408,15 +401,37 @@ class NLEnergyCostCoordinator:
         system = float(self._get(CONF_SYSTEM_OPERATOR_DAY_GAS, DEFAULT_SYSTEM_OPERATOR_DAY_GAS))
         return fixed + system
 
-    def _kwh_import_today(self) -> float:
+    def _import_cost(
+        self,
+        kwh_t1: float,
+        kwh_t2: float | None,
+        kwh_total: float | None,
+    ) -> float:
+        """Return import cost: T1×normaal + T2×dal when available, else total×normaal."""
+        if kwh_t2 is not None:
+            return kwh_t1 * self._normaal_rate + kwh_t2 * self._dal_rate
+        if kwh_total is not None:
+            return kwh_total * self._normaal_rate
+        return kwh_t1 * self._normaal_rate
+
+    def _kwh_import_today(self) -> tuple[float, float | None, float | None]:
+        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for today."""
         t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
         t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
         total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            return max(0.0, (t1 - (self._day_start_import_t1 or t1)) + (t2 - (self._day_start_import_t2 or t2)))
+            kwh_t1 = max(0.0, t1 - (self._day_start_import_t1 or t1))
+            kwh_t2 = max(0.0, t2 - (self._day_start_import_t2 or t2))
+            return kwh_t1, kwh_t2, None
         if total is not None:
-            return max(0.0, total - (self._day_start_import_total or total))
-        return 0.0
+            return 0.0, None, max(0.0, total - (self._day_start_import_total or total))
+        return 0.0, None, None
+
+    def _kwh_import_today_total(self) -> float:
+        kwh_t1, kwh_t2, kwh_total = self._kwh_import_today()
+        if kwh_t2 is not None:
+            return kwh_t1 + kwh_t2
+        return kwh_total or 0.0
 
     def _kwh_export_today(self) -> float:
         t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
@@ -434,15 +449,24 @@ class NLEnergyCostCoordinator:
             return 0.0
         return max(0.0, solar - (self._day_start_solar or solar))
 
-    def _kwh_import_month(self) -> float:
+    def _kwh_import_month(self) -> tuple[float, float | None, float | None]:
+        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for this month."""
         t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
         t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
         total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            return max(0.0, (t1 - (self._month_start_import_t1 or t1)) + (t2 - (self._month_start_import_t2 or t2)))
+            kwh_t1 = max(0.0, t1 - (self._month_start_import_t1 or t1))
+            kwh_t2 = max(0.0, t2 - (self._month_start_import_t2 or t2))
+            return kwh_t1, kwh_t2, None
         if total is not None:
-            return max(0.0, total - (self._month_start_import_total or total))
-        return 0.0
+            return 0.0, None, max(0.0, total - (self._month_start_import_total or total))
+        return 0.0, None, None
+
+    def _kwh_import_month_total(self) -> float:
+        kwh_t1, kwh_t2, kwh_total = self._kwh_import_month()
+        if kwh_t2 is not None:
+            return kwh_t1 + kwh_t2
+        return kwh_total or 0.0
 
     def _kwh_export_month(self) -> float:
         t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
@@ -454,7 +478,8 @@ class NLEnergyCostCoordinator:
             return max(0.0, total - (self._month_start_export_total or total))
         return 0.0
 
-    def _kwh_import_year(self) -> float | None:
+    def _kwh_import_year(self) -> tuple[float, float | None, float | None] | None:
+        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for this contract year, or None if unknown."""
         t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
         t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
         total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
@@ -463,13 +488,22 @@ class NLEnergyCostCoordinator:
             s2 = self._year_start_import_t2
             if s1 is None or s2 is None:
                 return None
-            return max(0.0, (t1 - s1) + (t2 - s2))
+            return max(0.0, t1 - s1), max(0.0, t2 - s2), None
         if total is not None:
             s = self._year_start_import_total
             if s is None:
                 return None
-            return max(0.0, total - s)
+            return 0.0, None, max(0.0, total - s)
         return None
+
+    def _kwh_import_year_total(self) -> float | None:
+        result = self._kwh_import_year()
+        if result is None:
+            return None
+        kwh_t1, kwh_t2, kwh_total = result
+        if kwh_t2 is not None:
+            return kwh_t1 + kwh_t2
+        return kwh_total
 
     def _kwh_export_year(self) -> float | None:
         t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
@@ -679,12 +713,12 @@ class NLEnergyCostCoordinator:
         import_w = _safe_float(self.hass, self._get(CONF_IMPORT_W))
         export_w = _safe_float(self.hass, self._get(CONF_EXPORT_W))
 
-        self.current_import_rate = self._import_rate
+        self.current_import_rate = self._normaal_rate
         self.current_export_rate = self._return_rate
 
         if import_w is not None:
             import_kw = import_w / 1000.0
-            self.electricity_current_cost_eur_h = import_kw * self._import_rate
+            self.electricity_current_cost_eur_h = import_kw * self._normaal_rate
             if export_w is not None and export_w > 0:
                 export_kw = export_w / 1000.0
                 self.electricity_current_cost_eur_h -= export_kw * self._return_rate
@@ -692,17 +726,19 @@ class NLEnergyCostCoordinator:
             self.electricity_current_cost_eur_h = None
 
         # --- Daily variable costs ---
-        kwh_import = self._kwh_import_today()
+        kwh_t1_d, kwh_t2_d, kwh_total_d = self._kwh_import_today()
+        kwh_import = self._kwh_import_today_total()
         kwh_export = self._kwh_export_today()
+        import_cost_day = self._import_cost(kwh_t1_d, kwh_t2_d, kwh_total_d)
         use_saldering = self._get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING)
 
         if use_saldering:
             if kwh_export <= kwh_import:
-                daily_variable = (kwh_import - kwh_export) * self._import_rate
+                daily_variable = import_cost_day - kwh_export * self._normaal_rate
             else:
                 daily_variable = -(kwh_export - kwh_import) * self._return_rate
         else:
-            daily_variable = (kwh_import * self._import_rate) - (kwh_export * self._return_rate)
+            daily_variable = import_cost_day - (kwh_export * self._return_rate)
         self.electricity_daily_variable_cost = round(daily_variable, 4)
         self.net_daily_kwh = round(kwh_import - kwh_export, 4)
 
@@ -715,8 +751,10 @@ class NLEnergyCostCoordinator:
         )
 
         # Monthly electricity
-        kwh_import_m = self._kwh_import_month()
+        kwh_t1_m, kwh_t2_m, kwh_total_m = self._kwh_import_month()
+        kwh_import_m = self._kwh_import_month_total()
         kwh_export_m = self._kwh_export_month()
+        import_cost_month = self._import_cost(kwh_t1_m, kwh_t2_m, kwh_total_m)
         days_in_month = (
             (now.replace(month=now.month % 12 + 1, day=1) - timedelta(days=1)).day
             if now.month < 12
@@ -725,16 +763,17 @@ class NLEnergyCostCoordinator:
         monthly_fixed = self._fixed_day_electricity * days_in_month
         if use_saldering:
             if kwh_export_m <= kwh_import_m:
-                monthly_variable = (kwh_import_m - kwh_export_m) * self._import_rate
+                monthly_variable = import_cost_month - kwh_export_m * self._normaal_rate
             else:
                 monthly_variable = -(kwh_export_m - kwh_import_m) * self._return_rate
         else:
-            monthly_variable = (kwh_import_m * self._import_rate) - (kwh_export_m * self._return_rate)
+            monthly_variable = import_cost_month - (kwh_export_m * self._return_rate)
         self.electricity_monthly_cost = round(monthly_fixed + monthly_variable, 4)
 
         # --- Salderingsbalans contract jaar ---
-        kwh_import_y = self._kwh_import_year()
+        year_result = self._kwh_import_year()
         kwh_export_y = self._kwh_export_year()
+        kwh_import_y = self._kwh_import_year_total()
         self.saldo_import_jaar_kwh = round(kwh_import_y, 2) if kwh_import_y is not None else None
         self.saldo_export_jaar_kwh = round(kwh_export_y, 2) if kwh_export_y is not None else None
         if kwh_import_y is not None and kwh_export_y is not None:
@@ -742,14 +781,16 @@ class NLEnergyCostCoordinator:
         else:
             self.saldo_netto_jaar_kwh = None
 
-        if kwh_import_y is not None and kwh_export_y is not None:
+        if year_result is not None and kwh_export_y is not None:
+            kwh_t1_y, kwh_t2_y, kwh_total_y = year_result
+            import_cost_year = self._import_cost(kwh_t1_y, kwh_t2_y, kwh_total_y)
             if use_saldering:
                 if kwh_export_y <= kwh_import_y:
-                    saldo_var = (kwh_import_y - kwh_export_y) * self._import_rate
+                    saldo_var = import_cost_year - kwh_export_y * self._normaal_rate
                 else:
                     saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
             else:
-                saldo_var = (kwh_import_y * self._import_rate) - (kwh_export_y * self._return_rate)
+                saldo_var = import_cost_year - (kwh_export_y * self._return_rate)
 
             # Days elapsed since contract year start
             if self._contract_year_start_dt is not None:

@@ -26,11 +26,9 @@ from .const import (
     CONF_SOLAR_KWH,
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
-    CONF_USE_SINGLE_TARIFF,
     CONF_USE_SALDERING,
     CONF_SALDO_START_MONTH,
     CONF_SALDO_START_DAY,
-    CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
     CONF_TARIFF_RETURN,
@@ -41,12 +39,10 @@ from .const import (
     CONF_GAS_TARIFF,
     CONF_FIXED_DELIVERY_DAY_GAS,
     CONF_SYSTEM_OPERATOR_DAY_GAS,
-    DEFAULT_TARIFF_ENKEL,
     DEFAULT_TARIFF_NORMAAL,
     DEFAULT_TARIFF_DAL,
     DEFAULT_TARIFF_RETURN,
     DEFAULT_TARIFF_RETURN_COST,
-    DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_USE_SALDERING,
     DEFAULT_SALDO_START_MONTH,
     DEFAULT_SALDO_START_DAY,
@@ -174,16 +170,6 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1, max=31, step=1.0, mode="box"
-                    )
-                ),
-                vol.Required(
-                    CONF_USE_SINGLE_TARIFF, default=DEFAULT_USE_SINGLE_TARIFF
-                ): selector.BooleanSelector(),
-                vol.Required(
-                    CONF_TARIFF_ENKEL, default=DEFAULT_TARIFF_ENKEL
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(
@@ -343,18 +329,6 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1, max=31, step=1, mode="box"
-                    )
-                ),
-                vol.Required(
-                    CONF_USE_SINGLE_TARIFF,
-                    default=data.get(CONF_USE_SINGLE_TARIFF, DEFAULT_USE_SINGLE_TARIFF),
-                ): selector.BooleanSelector(),
-                vol.Required(
-                    CONF_TARIFF_ENKEL,
-                    default=data.get(CONF_TARIFF_ENKEL, DEFAULT_TARIFF_ENKEL),
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=0, max=2, step="any", mode="box", unit_of_measurement="€/kWh"
                     )
                 ),
                 vol.Required(

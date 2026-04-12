@@ -35,8 +35,6 @@
           "use_saldering": "Net metering active",
           "saldo_start_month": "Contract year start month",
           "saldo_start_day": "Contract year start day",
-          "use_single_tariff": "Single tariff",
-          "tariff_enkel": "Single tariff €/kWh",
           "tariff_normaal": "Normal tariff €/kWh (T1/day)",
           "tariff_dal": "Off-peak tariff €/kWh (T2/night)",
           "tariff_return": "Return delivery compensation €/kWh (excl. VAT)",
@@ -46,10 +44,8 @@
           "use_saldering": "Disable if net metering no longer applies (abolishment expected from 2027). With net metering, export first offsets import at the import rate.",
           "saldo_start_month": "The month (1–12) on which your energy contract year starts. Found on your energy contract.",
           "saldo_start_day": "The day (1–31) on which your energy contract year starts. Found on your energy contract.",
-          "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
-          "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
-          "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",
-          "tariff_dal": "The all-in rate per kWh electricity during off-peak hours (night/weekend, T2), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_normaal": "The all-in rate per kWh during peak hours (daytime, T1), including VAT. On a single tariff? Enter the same amount for both normal and off-peak.",
+          "tariff_dal": "The all-in rate per kWh during off-peak hours (night/weekend, T2), including VAT. On a single tariff? Enter the same amount for both normal and off-peak.",
           "tariff_return": "The compensation you receive per kWh of electricity returned to the grid, excluding VAT. Found on your energy contract or invoice.",
           "tariff_return_cost": "The costs you pay per kWh of electricity returned to the grid, including VAT. See your contract for return delivery costs."
         }
@@ -83,8 +79,6 @@
           "use_saldering": "Net metering active",
           "saldo_start_month": "Contract year start month",
           "saldo_start_day": "Contract year start day",
-          "use_single_tariff": "Single tariff",
-          "tariff_enkel": "Single tariff €/kWh",
           "tariff_normaal": "Normal tariff €/kWh (T1/day)",
           "tariff_dal": "Off-peak tariff €/kWh (T2/night)",
           "tariff_return": "Return delivery compensation €/kWh (excl. VAT)",
@@ -94,10 +88,8 @@
           "use_saldering": "Disable if net metering no longer applies (abolishment expected from 2027). With net metering, export first offsets import at the import rate.",
           "saldo_start_month": "The month (1–12) on which your energy contract year starts. Found on your energy contract.",
           "saldo_start_day": "The day (1–31) on which your energy contract year starts. Found on your energy contract.",
-          "use_single_tariff": "Choose single tariff if your meter does not distinguish between day/night rates (no T1/T2 split).",
-          "tariff_enkel": "The all-in rate per kWh electricity you pay, including VAT. Consists of delivery rate + energy tax + VAT.",
-          "tariff_normaal": "The all-in rate per kWh electricity during peak hours (daytime, T1), including VAT. Consists of delivery rate + energy tax + VAT.",
-          "tariff_dal": "The all-in rate per kWh electricity during off-peak hours (night/weekend, T2), including VAT. Consists of delivery rate + energy tax + VAT.",
+          "tariff_normaal": "The all-in rate per kWh during peak hours (daytime, T1), including VAT. On a single tariff? Enter the same amount for both normal and off-peak.",
+          "tariff_dal": "The all-in rate per kWh during off-peak hours (night/weekend, T2), including VAT. On a single tariff? Enter the same amount for both normal and off-peak.",
           "tariff_return": "The compensation you receive per kWh of electricity returned to the grid, excluding VAT. Found on your energy contract or invoice.",
           "tariff_return_cost": "The costs you pay per kWh of electricity returned to the grid, including VAT. See your contract for return delivery costs."
         }
