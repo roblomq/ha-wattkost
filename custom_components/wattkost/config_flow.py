@@ -7,9 +7,9 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-import homeassistant.helpers.config_validation as cv
 
 from .const import (
     DOMAIN,
@@ -81,7 +81,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Step 1: Import sensors."""
         if user_input is not None:
             self._data.update(_clean(user_input))
@@ -104,7 +104,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_export_sensors(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Step 2: Export / teruglevering sensors."""
         if user_input is not None:
             self._data.update(_clean(user_input))
@@ -127,7 +127,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_other_sensors(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Step 3: Solar, consumption and gas sensors."""
         if user_input is not None:
             self._data.update(_clean(user_input))
@@ -151,7 +151,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_electricity_tariffs(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Step 4: Electricity tariffs."""
         if user_input is not None:
             self._data.update(user_input)
@@ -225,7 +225,7 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_fixed_costs(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Step 5: Fixed daily costs and gas tariff."""
         if user_input is not None:
             self._data.update(user_input)
@@ -311,7 +311,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Manage options: update tariffs."""
         # Merge data + options on first call (options override data)
         if not self._data:
@@ -400,11 +400,11 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_fixed_costs_options(
         self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.FlowResult:
+    ) -> ConfigFlowResult:
         """Options step 2: fixed costs."""
         if user_input is not None:
             self._data.update(user_input)
-            return self.async_create_entry(title="", data=self._data)
+            return self.async_create_entry(data=self._data)
 
         data = self._data
 

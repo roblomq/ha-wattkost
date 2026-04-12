@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime
 import logging
 from datetime import date, timedelta
-from functools import partial
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -14,7 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_state_change_event,
@@ -609,7 +608,6 @@ class NLEnergyCostCoordinator:
 
             def _query():
                 return get_significant_states(
-                    self.hass,
                     start_dt,
                     end_dt,
                     entity_ids,
