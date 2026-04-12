@@ -299,21 +299,24 @@ class NLEnergyCostConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> NLEnergyCostOptionsFlow:
         """Return options flow."""
-        return NLEnergyCostOptionsFlow(config_entry)
+        return NLEnergyCostOptionsFlow()
 
 
 class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for NL Energy Cost (re-configure tariffs)."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
-        self._data: dict[str, Any] = dict(config_entry.data)
+        self._data: dict[str, Any] = {}
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         """Manage options: update tariffs."""
+        # Merge data + options on first call (options override data)
+        if not self._data:
+            self._data = {**self.config_entry.data, **self.config_entry.options}
+
         if user_input is not None:
             self._data.update(user_input)
             return await self.async_step_fixed_costs_options()
