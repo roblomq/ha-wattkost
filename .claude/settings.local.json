@@ -26,7 +26,12 @@
       "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.6 --title \"v1.1.6\" --notes \"Fix saldering: export now correctly credited at import rate \\(not the lower return rate\\) up to the amount imported. Only surplus export gets the terugleververgoeding.\")",
       "Bash(python -c \"import json; json.load\\(open\\('custom_components/wattkost/strings.json'\\)\\)\")",
       "Bash(python -c \"import json; json.load\\(open\\('custom_components/wattkost/translations/nl.json'\\)\\)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' release create v1.1.11 --title 'v1.1.11 — Fix hassfest: recorder in after_dependencies' --notes ':*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.1.12 --title \"v1.1.12 — Fix manifest sleutelvolgorde\" --notes \"Manifest sleutels gesorteerd: domain, name, daarna alfabetisch \\(after_dependencies voor codeowners\\).\")",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' release create v1.1.13 --title 'v1.1.13 — Fix 500-fout OptionsFlow \\(HA 2024.11+\\)' --notes ':*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' release create v1.1.14 --title 'v1.1.14 — Moderniseer HA API syntax \\(2024.x+\\)' --notes ':*)",
+      "Bash('/c/Program Files/GitHub CLI/gh.exe' release create v1.1.15 --title 'v1.1.15 — Enkeltarief-schakelaar verwijderd' --notes ':*)"
     ]
   }
 }

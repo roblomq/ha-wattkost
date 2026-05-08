@@ -298,11 +298,61 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage options: update tariffs."""
+        """Manage options: first choose sensors or proceed to tariffs."""
         # Merge data + options on first call (options override data)
         if not self._data:
             self._data = {**self.config_entry.data, **self.config_entry.options}
 
+        if user_input is not None:
+            return await self.async_step_sensors_options()
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "next_step": "Kies een optie om verder te gaan."
+            },
+            last_step=False,
+        )
+
+    async def async_step_sensors_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage options: update sensors."""
+        if user_input is not None:
+            self._data.update(_clean(user_input))
+            return await self.async_step_tariffs_options()
+
+        data = self._data
+
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_IMPORT_T1_KWH, default=data.get(CONF_IMPORT_T1_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_IMPORT_T2_KWH, default=data.get(CONF_IMPORT_T2_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_IMPORT_TOTAL_KWH, default=data.get(CONF_IMPORT_TOTAL_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_IMPORT_W, default=data.get(CONF_IMPORT_W)): SENSOR_SELECTOR,
+                vol.Optional(CONF_EXPORT_T1_KWH, default=data.get(CONF_EXPORT_T1_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_EXPORT_T2_KWH, default=data.get(CONF_EXPORT_T2_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_EXPORT_TOTAL_KWH, default=data.get(CONF_EXPORT_TOTAL_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_EXPORT_W, default=data.get(CONF_EXPORT_W)): SENSOR_SELECTOR,
+                vol.Optional(CONF_SOLAR_KWH, default=data.get(CONF_SOLAR_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_SOLAR_W, default=data.get(CONF_SOLAR_W)): SENSOR_SELECTOR,
+                vol.Optional(CONF_CONSUMPTION_W, default=data.get(CONF_CONSUMPTION_W)): SENSOR_SELECTOR,
+                vol.Optional(CONF_CONSUMPTION_KWH, default=data.get(CONF_CONSUMPTION_KWH)): SENSOR_SELECTOR,
+                vol.Optional(CONF_GAS_DAILY_M3, default=data.get(CONF_GAS_DAILY_M3)): SENSOR_SELECTOR,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="sensors_options",
+            data_schema=schema,
+            last_step=False,
+        )
+
+    async def async_step_tariffs_options(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage options: update tariffs."""
         if user_input is not None:
             self._data.update(user_input)
             return await self.async_step_fixed_costs_options()
@@ -367,7 +417,7 @@ class NLEnergyCostOptionsFlow(config_entries.OptionsFlow):
         )
 
         return self.async_show_form(
-            step_id="init",
+            step_id="tariffs_options",
             data_schema=schema,
             last_step=False,
         )
