@@ -1,7 +1,6 @@
-"""Sensor platform for NL Energy Cost integration."""
+"""Sensor platform for WattKost integration."""
 from __future__ import annotations
 
-import datetime
 import logging
 from datetime import date, timedelta
 from typing import Any
@@ -13,13 +12,12 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_change,
 )
-from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -37,9 +35,8 @@ from .const import (
     CONF_SOLAR_KWH,
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
-    CONF_USE_SALDERING,
-    CONF_SALDO_START_MONTH,
-    CONF_SALDO_START_DAY,
+    CONF_USE_SINGLE_TARIFF,
+    CONF_TARIFF_ENKEL,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
     CONF_TARIFF_RETURN,
@@ -50,16 +47,15 @@ from .const import (
     CONF_GAS_TARIFF,
     CONF_FIXED_DELIVERY_DAY_GAS,
     CONF_SYSTEM_OPERATOR_DAY_GAS,
+    DEFAULT_TARIFF_ENKEL,
     DEFAULT_TARIFF_NORMAAL,
     DEFAULT_TARIFF_DAL,
     DEFAULT_TARIFF_RETURN,
     DEFAULT_TARIFF_RETURN_COST,
-    DEFAULT_USE_SALDERING,
-    DEFAULT_SALDO_START_MONTH,
-    DEFAULT_SALDO_START_DAY,
+    DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
-    DEFAULT_ENERGY_REDUCTION_DAY,
+    DEFAULT_ENERGY_REDUCTION_YEAR,
     DEFAULT_GAS_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_GAS,
     DEFAULT_SYSTEM_OPERATOR_DAY_GAS,
@@ -68,7 +64,6 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 DAYS_PER_YEAR = 365.2425
-STORAGE_VERSION = 1
 
 
 def _safe_float(hass: HomeAssistant, entity_id: str | None) -> float | None:
@@ -84,75 +79,18 @@ def _safe_float(hass: HomeAssistant, entity_id: str | None) -> float | None:
         return None
 
 
-def _contract_year_start(now: datetime.datetime, start_month: int, start_day: int) -> datetime.datetime:
-    """Return the most recent contract year start datetime."""
-    tz = now.tzinfo
-    this_year_start = datetime.datetime(now.year, start_month, start_day, 0, 0, 0, tzinfo=tz)
-    if now >= this_year_start:
-        return this_year_start
-    return datetime.datetime(now.year - 1, start_month, start_day, 0, 0, 0, tzinfo=tz)
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up NL Energy Cost sensors from config entry."""
+    """Set up WattKost sensors from config entry."""
     config = {**entry.data, **entry.options}
-
-    coordinator = NLEnergyCostCoordinator(hass, config, entry.entry_id)
+    coordinator = WattKostCoordinator(hass, config, entry.entry_id)
 
     sensors = [
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="saldo_import_jaar_kwh",
-            name="Saldo import dit jaar",
-            unit="kWh",
-            icon="mdi:transmission-tower-import",
-            device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
-            value_fn=lambda c: c.saldo_import_jaar_kwh,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="saldo_export_jaar_kwh",
-            name="Saldo export dit jaar",
-            unit="kWh",
-            icon="mdi:transmission-tower-export",
-            device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
-            value_fn=lambda c: c.saldo_export_jaar_kwh,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="saldo_netto_jaar_kwh",
-            name="Saldo netto dit jaar",
-            unit="kWh",
-            icon="mdi:scale-balance",
-            device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.saldo_netto_jaar_kwh,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="saldo_kosten_jaarafrekening",
-            name="Geschatte jaarafrekening stroom",
-            unit="€",
-            icon="mdi:cash-clock",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.saldo_kosten_jaarafrekening,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
+        # --- Actueel ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_current_cost_eur_h",
@@ -160,11 +98,11 @@ async def async_setup_entry(
             unit="€/h",
             icon="mdi:lightning-bolt",
             device_class=None,
+            # MEASUREMENT: kan negatief zijn bij netto teruglevering
             state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.electricity_current_cost_eur_h,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_import_rate",
@@ -174,9 +112,8 @@ async def async_setup_entry(
             device_class=None,
             state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.current_import_rate,
-            precision=5,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_export_rate",
@@ -186,9 +123,9 @@ async def async_setup_entry(
             device_class=None,
             state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.current_export_rate,
-            precision=5,
         ),
-        NLEnergyCostSensor(
+        # --- Dagkosten stroom ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_daily_variable_cost",
@@ -196,11 +133,11 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:lightning-bolt",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: negatief mogelijk bij veel teruglevering
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.electricity_daily_variable_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_daily_fixed_cost",
@@ -208,11 +145,11 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:calendar-today",
             device_class=SensorDeviceClass.MONETARY,
+            # MEASUREMENT: stabiel bedrag, geen cumulatief
             state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.electricity_daily_fixed_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_daily_total_cost",
@@ -220,11 +157,12 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:lightning-bolt",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: negatief mogelijk op zonnige dag met veel teruglevering
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.electricity_daily_total_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        # --- Maandkosten stroom ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_monthly_cost",
@@ -232,23 +170,25 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:lightning-bolt",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: kan negatief zijn in zonnige maand
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.electricity_monthly_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        # --- kWh netto ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="electricity_net_daily_kwh",
-            name="Stroom netto dag kWh (import - export)",
+            name="Stroom netto dag kWh",
             unit="kWh",
             icon="mdi:transmission-tower",
             device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: negatief bij netto teruglevering
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.net_daily_kwh,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        # --- Gas ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="gas_daily_cost",
@@ -256,11 +196,11 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:gas-burner",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: kan dalen als dagstart-snapshot verschuift
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.gas_daily_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="gas_monthly_cost",
@@ -268,11 +208,11 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:gas-burner",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.gas_monthly_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        # --- Totalen ---
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="total_daily_cost",
@@ -280,11 +220,11 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:cash",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            # MEASUREMENT: negatief mogelijk op zonnige dag
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.total_daily_cost,
-            precision=2,
         ),
-        NLEnergyCostSensor(
+        WattKostSensor(
             coordinator=coordinator,
             entry_id=entry.entry_id,
             key="total_monthly_cost",
@@ -292,45 +232,8 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:cash",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.TOTAL_INCREASING,
+            state_class=SensorStateClass.MEASUREMENT,
             value_fn=lambda c: c.total_monthly_cost,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_previous_month_cost",
-            name="Stroom vorige maand kosten",
-            unit="€",
-            icon="mdi:cash",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_previous_month_cost,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="gas_previous_month_cost",
-            name="Gas vorige maand kosten",
-            unit="€",
-            icon="mdi:gas-burner",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.gas_previous_month_cost,
-            precision=2,
-        ),
-        NLEnergyCostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="total_previous_month_cost",
-            name="Totale kosten vorige maand",
-            unit="€",
-            icon="mdi:cash-multiple",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.total_previous_month_cost,
-            precision=2,
         ),
     ]
 
@@ -338,7 +241,7 @@ async def async_setup_entry(
     await coordinator.async_setup(sensors)
 
 
-class NLEnergyCostCoordinator:
+class WattKostCoordinator:
     """Central coordinator that tracks all state and computes costs."""
 
     def __init__(
@@ -351,8 +254,7 @@ class NLEnergyCostCoordinator:
         self.hass = hass
         self.config = config
         self.entry_id = entry_id
-        self._sensors: list[NLEnergyCostSensor] = []
-        self._store: Store | None = None
+        self._sensors: list[WattKostSensor] = []
 
         # Day tracking
         self._current_day: date = dt_util.now().date()
@@ -363,33 +265,19 @@ class NLEnergyCostCoordinator:
         self._day_start_solar: float | None = None
         self._day_start_import_total: float | None = None
         self._day_start_export_total: float | None = None
+        self._day_start_gas: float | None = None
 
         # Month tracking
+        self._current_month: int = dt_util.now().month
         self._month_start_import_t1: float | None = None
         self._month_start_import_t2: float | None = None
         self._month_start_export_t1: float | None = None
         self._month_start_export_t2: float | None = None
-        self._month_start_solar: float | None = None
         self._month_start_import_total: float | None = None
         self._month_start_export_total: float | None = None
         self._month_start_gas: float | None = None
-        self._day_start_gas: float | None = None
-        self._current_month: int = dt_util.now().month
 
-        # Contract year tracking (salderingsbalans)
-        self._contract_year_start_dt: datetime.datetime | None = None
-        self._year_start_import_t1: float | None = None
-        self._year_start_import_t2: float | None = None
-        self._year_start_export_t1: float | None = None
-        self._year_start_export_t2: float | None = None
-        self._year_start_import_total: float | None = None
-        self._year_start_export_total: float | None = None
-
-        # Computed values
-        self.saldo_import_jaar_kwh: float | None = None
-        self.saldo_export_jaar_kwh: float | None = None
-        self.saldo_netto_jaar_kwh: float | None = None
-        self.saldo_kosten_jaarafrekening: float | None = None
+        # Computed values — all can be None or negative
         self.electricity_current_cost_eur_h: float | None = None
         self.current_import_rate: float | None = None
         self.current_export_rate: float | None = None
@@ -402,321 +290,104 @@ class NLEnergyCostCoordinator:
         self.gas_monthly_cost: float | None = None
         self.total_daily_cost: float | None = None
         self.total_monthly_cost: float | None = None
-        self.electricity_previous_month_cost: float | None = None
-        self.gas_previous_month_cost: float | None = None
-        self.total_previous_month_cost: float | None = None
 
     @property
-    def _cfg(self) -> dict[str, Any]:
-        return self.config
-
-    def _get(self, key: str, default: Any = None) -> Any:
-        return self._cfg.get(key, default)
-
-    @property
-    def _normaal_rate(self) -> float:
-        return float(self._get(CONF_TARIFF_NORMAAL, DEFAULT_TARIFF_NORMAAL))
-
-    @property
-    def _dal_rate(self) -> float:
-        return float(self._get(CONF_TARIFF_DAL, DEFAULT_TARIFF_DAL))
+    def _import_rate(self) -> float:
+        use_single = self.config.get(CONF_USE_SINGLE_TARIFF, DEFAULT_USE_SINGLE_TARIFF)
+        if use_single:
+            return float(self.config.get(CONF_TARIFF_ENKEL, DEFAULT_TARIFF_ENKEL))
+        return float(self.config.get(CONF_TARIFF_NORMAAL, DEFAULT_TARIFF_NORMAAL))
 
     @property
     def _return_rate(self) -> float:
-        credit = float(self._get(CONF_TARIFF_RETURN, DEFAULT_TARIFF_RETURN)) * 1.21
-        cost = float(self._get(CONF_TARIFF_RETURN_COST, DEFAULT_TARIFF_RETURN_COST))
+        """Net credit per kWh teruggeleverd (vergoeding incl BTW - kosten)."""
+        credit = float(self.config.get(CONF_TARIFF_RETURN, DEFAULT_TARIFF_RETURN)) * 1.21
+        cost = float(self.config.get(CONF_TARIFF_RETURN_COST, DEFAULT_TARIFF_RETURN_COST))
         return credit - cost
 
     @property
     def _fixed_day_electricity(self) -> float:
-        fixed = float(self._get(CONF_FIXED_DELIVERY_DAY_ELECTRICITY, DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY))
-        system = float(self._get(CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY, DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY))
-        reduction_day = float(self._get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_DAY))
+        fixed = float(self.config.get(CONF_FIXED_DELIVERY_DAY_ELECTRICITY, DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY))
+        system = float(self.config.get(CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY, DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY))
+        reduction_day = float(self.config.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_YEAR)) / DAYS_PER_YEAR
         return fixed + system + reduction_day
 
     @property
     def _fixed_day_gas(self) -> float:
-        fixed = float(self._get(CONF_FIXED_DELIVERY_DAY_GAS, DEFAULT_FIXED_DELIVERY_DAY_GAS))
-        system = float(self._get(CONF_SYSTEM_OPERATOR_DAY_GAS, DEFAULT_SYSTEM_OPERATOR_DAY_GAS))
+        fixed = float(self.config.get(CONF_FIXED_DELIVERY_DAY_GAS, DEFAULT_FIXED_DELIVERY_DAY_GAS))
+        system = float(self.config.get(CONF_SYSTEM_OPERATOR_DAY_GAS, DEFAULT_SYSTEM_OPERATOR_DAY_GAS))
         return fixed + system
 
-    def _import_cost(
-        self,
-        kwh_t1: float,
-        kwh_t2: float | None,
-        kwh_total: float | None,
-    ) -> float:
-        """Return import cost: T1×normaal + T2×dal when available, else total×normaal."""
-        if kwh_t2 is not None:
-            return kwh_t1 * self._normaal_rate + kwh_t2 * self._dal_rate
-        if kwh_total is not None:
-            return kwh_total * self._normaal_rate
-        return kwh_t1 * self._normaal_rate
-
-    def _kwh_import_today(self) -> tuple[float, float | None, float | None]:
-        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for today."""
-        t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
+    def _kwh_import_today(self) -> float:
+        t1 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T2_KWH))
+        total = _safe_float(self.hass, self.config.get(CONF_IMPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            kwh_t1 = max(0.0, t1 - (self._day_start_import_t1 or t1))
-            kwh_t2 = max(0.0, t2 - (self._day_start_import_t2 or t2))
-            return kwh_t1, kwh_t2, None
+            return max(0.0, (t1 - (self._day_start_import_t1 or t1)) + (t2 - (self._day_start_import_t2 or t2)))
         if total is not None:
-            return 0.0, None, max(0.0, total - (self._day_start_import_total or total))
-        return 0.0, None, None
-
-    def _kwh_import_today_total(self) -> float:
-        kwh_t1, kwh_t2, kwh_total = self._kwh_import_today()
-        if kwh_t2 is not None:
-            return kwh_t1 + kwh_t2
-        return kwh_total or 0.0
+            return max(0.0, total - (self._day_start_import_total or total))
+        return 0.0
 
     def _kwh_export_today(self) -> float:
-        t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
+        t1 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T2_KWH))
+        total = _safe_float(self.hass, self.config.get(CONF_EXPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
             return max(0.0, (t1 - (self._day_start_export_t1 or t1)) + (t2 - (self._day_start_export_t2 or t2)))
         if total is not None:
             return max(0.0, total - (self._day_start_export_total or total))
         return 0.0
 
-    def _kwh_solar_today(self) -> float:
-        solar = _safe_float(self.hass, self._get(CONF_SOLAR_KWH))
-        if solar is None:
-            return 0.0
-        return max(0.0, solar - (self._day_start_solar or solar))
-
-    def _kwh_import_month(self) -> tuple[float, float | None, float | None]:
-        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for this month."""
-        t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
+    def _kwh_import_month(self) -> float:
+        t1 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T2_KWH))
+        total = _safe_float(self.hass, self.config.get(CONF_IMPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
-            kwh_t1 = max(0.0, t1 - (self._month_start_import_t1 or t1))
-            kwh_t2 = max(0.0, t2 - (self._month_start_import_t2 or t2))
-            return kwh_t1, kwh_t2, None
+            return max(0.0, (t1 - (self._month_start_import_t1 or t1)) + (t2 - (self._month_start_import_t2 or t2)))
         if total is not None:
-            return 0.0, None, max(0.0, total - (self._month_start_import_total or total))
-        return 0.0, None, None
-
-    def _kwh_import_month_total(self) -> float:
-        kwh_t1, kwh_t2, kwh_total = self._kwh_import_month()
-        if kwh_t2 is not None:
-            return kwh_t1 + kwh_t2
-        return kwh_total or 0.0
+            return max(0.0, total - (self._month_start_import_total or total))
+        return 0.0
 
     def _kwh_export_month(self) -> float:
-        t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
+        t1 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T1_KWH))
+        t2 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T2_KWH))
+        total = _safe_float(self.hass, self.config.get(CONF_EXPORT_TOTAL_KWH))
         if t1 is not None and t2 is not None:
             return max(0.0, (t1 - (self._month_start_export_t1 or t1)) + (t2 - (self._month_start_export_t2 or t2)))
         if total is not None:
             return max(0.0, total - (self._month_start_export_total or total))
         return 0.0
 
-    def _kwh_import_year(self) -> tuple[float, float | None, float | None] | None:
-        """Return (kwh_t1, kwh_t2_or_None, kwh_total_or_None) for this contract year, or None if unknown."""
-        t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
-        if t1 is not None and t2 is not None:
-            s1 = self._year_start_import_t1
-            s2 = self._year_start_import_t2
-            if s1 is None or s2 is None:
-                return None
-            return max(0.0, t1 - s1), max(0.0, t2 - s2), None
-        if total is not None:
-            s = self._year_start_import_total
-            if s is None:
-                return None
-            return 0.0, None, max(0.0, total - s)
-        return None
-
-    def _kwh_import_year_total(self) -> float | None:
-        result = self._kwh_import_year()
-        if result is None:
-            return None
-        kwh_t1, kwh_t2, kwh_total = result
-        if kwh_t2 is not None:
-            return kwh_t1 + kwh_t2
-        return kwh_total
-
-    def _kwh_export_year(self) -> float | None:
-        t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
-        if t1 is not None and t2 is not None:
-            s1 = self._year_start_export_t1
-            s2 = self._year_start_export_t2
-            if s1 is None or s2 is None:
-                return None
-            return max(0.0, (t1 - s1) + (t2 - s2))
-        if total is not None:
-            s = self._year_start_export_total
-            if s is None:
-                return None
-            return max(0.0, total - s)
-        return None
-
     def _gas_today_m3(self) -> float:
-        gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
+        gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
         if gas is None:
             return 0.0
         return max(0.0, gas - (self._day_start_gas or gas))
 
     def _gas_month_m3(self) -> float:
-        gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
+        gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
         if gas is None:
             return 0.0
         return max(0.0, gas - (self._month_start_gas or gas))
 
     def _snapshot_day_start(self) -> None:
-        self._day_start_import_t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        self._day_start_import_t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        self._day_start_export_t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        self._day_start_export_t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        self._day_start_solar = _safe_float(self.hass, self._get(CONF_SOLAR_KWH))
-        self._day_start_import_total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
-        self._day_start_export_total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
-        self._day_start_gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
+        self._day_start_import_t1 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T1_KWH))
+        self._day_start_import_t2 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T2_KWH))
+        self._day_start_export_t1 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T1_KWH))
+        self._day_start_export_t2 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T2_KWH))
+        self._day_start_solar = _safe_float(self.hass, self.config.get(CONF_SOLAR_KWH))
+        self._day_start_import_total = _safe_float(self.hass, self.config.get(CONF_IMPORT_TOTAL_KWH))
+        self._day_start_export_total = _safe_float(self.hass, self.config.get(CONF_EXPORT_TOTAL_KWH))
+        self._day_start_gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
 
     def _snapshot_month_start(self) -> None:
-        self._month_start_import_t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        self._month_start_import_t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        self._month_start_export_t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        self._month_start_export_t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        self._month_start_solar = _safe_float(self.hass, self._get(CONF_SOLAR_KWH))
-        self._month_start_import_total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
-        self._month_start_export_total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
-        self._month_start_gas = _safe_float(self.hass, self._get(CONF_GAS_DAILY_M3))
-
-    def _snapshot_year_start_from_current(self) -> None:
-        """Snapshot current meter values as year-start baseline and persist."""
-        self._year_start_import_t1 = _safe_float(self.hass, self._get(CONF_IMPORT_T1_KWH))
-        self._year_start_import_t2 = _safe_float(self.hass, self._get(CONF_IMPORT_T2_KWH))
-        self._year_start_export_t1 = _safe_float(self.hass, self._get(CONF_EXPORT_T1_KWH))
-        self._year_start_export_t2 = _safe_float(self.hass, self._get(CONF_EXPORT_T2_KWH))
-        self._year_start_import_total = _safe_float(self.hass, self._get(CONF_IMPORT_TOTAL_KWH))
-        self._year_start_export_total = _safe_float(self.hass, self._get(CONF_EXPORT_TOTAL_KWH))
-        self.hass.async_create_task(self._async_save_year_start())
-
-    async def _async_save_year_start(self) -> None:
-        """Persist year-start values to storage."""
-        if self._store is None or self._contract_year_start_dt is None:
-            return
-        await self._store.async_save({
-            "contract_year_start": self._contract_year_start_dt.isoformat(),
-            "import_t1": self._year_start_import_t1,
-            "import_t2": self._year_start_import_t2,
-            "export_t1": self._year_start_export_t1,
-            "export_t2": self._year_start_export_t2,
-            "import_total": self._year_start_import_total,
-            "export_total": self._year_start_export_total,
-        })
-
-    async def _async_load_or_fetch_year_start(self) -> None:
-        """Load persisted year-start values or fetch from recorder history."""
-        now = dt_util.now()
-        start_month = int(self._get(CONF_SALDO_START_MONTH, DEFAULT_SALDO_START_MONTH))
-        start_day = int(self._get(CONF_SALDO_START_DAY, DEFAULT_SALDO_START_DAY))
-        self._contract_year_start_dt = _contract_year_start(now, start_month, start_day)
-
-        # Try loading from persistent storage first
-        self._store = Store(
-            self.hass, STORAGE_VERSION, f"wattkost_year_start_{self.entry_id}"
-        )
-        stored = await self._store.async_load()
-
-        if stored:
-            try:
-                stored_dt = datetime.datetime.fromisoformat(stored["contract_year_start"])
-                # Only use stored values if they match the current contract year start
-                if abs((stored_dt - self._contract_year_start_dt).total_seconds()) < 86400:
-                    self._year_start_import_t1 = stored.get("import_t1")
-                    self._year_start_import_t2 = stored.get("import_t2")
-                    self._year_start_export_t1 = stored.get("export_t1")
-                    self._year_start_export_t2 = stored.get("export_t2")
-                    self._year_start_import_total = stored.get("import_total")
-                    self._year_start_export_total = stored.get("export_total")
-                    _LOGGER.debug("WattKost: jaar-start geladen uit opslag (%s)", stored_dt.date())
-                    return
-            except Exception:
-                pass
-
-        # Try recorder history to get values at contract year start
-        await self._async_fetch_year_start_from_recorder()
-
-    async def _async_fetch_year_start_from_recorder(self) -> None:
-        """Query recorder for sensor values at contract year start."""
-        if self._contract_year_start_dt is None:
-            return
-
-        try:
-            from homeassistant.components.recorder import get_instance
-            from homeassistant.components.recorder.history import get_significant_states
-
-            start_dt = self._contract_year_start_dt
-            end_dt = start_dt + datetime.timedelta(hours=2)
-
-            sensor_map = {
-                CONF_IMPORT_T1_KWH: "_year_start_import_t1",
-                CONF_IMPORT_T2_KWH: "_year_start_import_t2",
-                CONF_EXPORT_T1_KWH: "_year_start_export_t1",
-                CONF_EXPORT_T2_KWH: "_year_start_export_t2",
-                CONF_IMPORT_TOTAL_KWH: "_year_start_import_total",
-                CONF_EXPORT_TOTAL_KWH: "_year_start_export_total",
-            }
-
-            entity_ids = [
-                self._get(k) for k in sensor_map if self._get(k)
-            ]
-
-            if not entity_ids:
-                return
-
-            recorder = get_instance(self.hass)
-
-            def _query():
-                return get_significant_states(
-                    start_dt,
-                    end_dt,
-                    entity_ids,
-                    minimal_response=True,
-                    no_attributes=True,
-                )
-
-            history = await recorder.async_add_executor_job(_query)
-
-            found_any = False
-            for conf_key, attr in sensor_map.items():
-                entity_id = self._get(conf_key)
-                if not entity_id or entity_id not in history:
-                    continue
-                states = history[entity_id]
-                if states:
-                    try:
-                        val = float(states[0].state)
-                        setattr(self, attr, val)
-                        found_any = True
-                        _LOGGER.debug(
-                            "WattKost: jaar-start %s = %.3f (via recorder)", entity_id, val
-                        )
-                    except (ValueError, TypeError):
-                        pass
-
-            if found_any:
-                await self._async_save_year_start()
-                return
-
-        except Exception as err:
-            _LOGGER.debug("WattKost: recorder lookup mislukt: %s", err)
-
-        # Fallback: use current values as baseline
-        _LOGGER.debug("WattKost: geen historische data, gebruik huidige waarden als jaar-start")
-        self._snapshot_year_start_from_current()
+        self._month_start_import_t1 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T1_KWH))
+        self._month_start_import_t2 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T2_KWH))
+        self._month_start_export_t1 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T1_KWH))
+        self._month_start_export_t2 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T2_KWH))
+        self._month_start_import_total = _safe_float(self.hass, self.config.get(CONF_IMPORT_TOTAL_KWH))
+        self._month_start_export_total = _safe_float(self.hass, self.config.get(CONF_EXPORT_TOTAL_KWH))
+        self._month_start_gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
 
     def update(self) -> None:
         """Recompute all cost sensors."""
@@ -732,16 +403,6 @@ class NLEnergyCostCoordinator:
         if now.month != self._current_month:
             self._snapshot_month_start()
             self._current_month = now.month
-            self.hass.async_create_task(self._async_load_previous_month_costs())
-
-        # Contract year rollover
-        if self._contract_year_start_dt is not None:
-            start_month = int(self._get(CONF_SALDO_START_MONTH, DEFAULT_SALDO_START_MONTH))
-            start_day = int(self._get(CONF_SALDO_START_DAY, DEFAULT_SALDO_START_DAY))
-            new_year_start = _contract_year_start(now, start_month, start_day)
-            if new_year_start != self._contract_year_start_dt:
-                self._contract_year_start_dt = new_year_start
-                self._snapshot_year_start_from_current()
 
         # Initialize baselines on first run
         if self._day_start_import_t1 is None and self._day_start_import_total is None:
@@ -749,112 +410,62 @@ class NLEnergyCostCoordinator:
         if self._month_start_import_t1 is None and self._month_start_import_total is None:
             self._snapshot_month_start()
 
-        # --- Current rate & instantaneous cost ---
-        import_w = _safe_float(self.hass, self._get(CONF_IMPORT_W))
-        export_w = _safe_float(self.hass, self._get(CONF_EXPORT_W))
-
-        self.current_import_rate = self._normaal_rate
+        # --- Actueel importtarief & teruglevertarief ---
+        self.current_import_rate = self._import_rate
         self.current_export_rate = self._return_rate
 
+        # --- Actuele kosten (€/h) ---
+        import_w = _safe_float(self.hass, self.config.get(CONF_IMPORT_W))
+        export_w = _safe_float(self.hass, self.config.get(CONF_EXPORT_W))
+
         if import_w is not None:
-            import_kw = import_w / 1000.0
-            self.electricity_current_cost_eur_h = import_kw * self._normaal_rate
+            cost_h = (import_w / 1000.0) * self._import_rate
             if export_w is not None and export_w > 0:
-                export_kw = export_w / 1000.0
-                self.electricity_current_cost_eur_h -= export_kw * self._return_rate
+                cost_h -= (export_w / 1000.0) * self._return_rate
+            self.electricity_current_cost_eur_h = cost_h
         else:
             self.electricity_current_cost_eur_h = None
 
-        # --- Daily variable costs ---
-        kwh_t1_d, kwh_t2_d, kwh_total_d = self._kwh_import_today()
-        kwh_import = self._kwh_import_today_total()
+        # --- Dagkosten stroom ---
+        kwh_import = self._kwh_import_today()
         kwh_export = self._kwh_export_today()
-        import_cost_day = self._import_cost(kwh_t1_d, kwh_t2_d, kwh_total_d)
-        use_saldering = self._get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING)
 
-        if use_saldering:
-            if kwh_export <= kwh_import:
-                daily_variable = import_cost_day - kwh_export * self._normaal_rate
-            else:
-                daily_variable = -(kwh_export - kwh_import) * self._return_rate
-        else:
-            daily_variable = import_cost_day - (kwh_export * self._return_rate)
-        self.electricity_daily_variable_cost = round(daily_variable, 4)
+        # Variabele kosten: negatief = je hebt meer terugeleverd dan geïmporteerd → credit
+        import_cost = kwh_import * self._import_rate
+        export_credit = kwh_export * self._return_rate
+        self.electricity_daily_variable_cost = round(import_cost - export_credit, 4)
         self.net_daily_kwh = round(kwh_import - kwh_export, 4)
 
-        # Daily fixed
+        # Vaste kosten: altijd positief
         self.electricity_daily_fixed_cost = round(self._fixed_day_electricity, 4)
 
-        # Daily total
+        # Totaal dagkosten: kan negatief zijn bij veel teruglevering
         self.electricity_daily_total_cost = round(
             self.electricity_daily_variable_cost + self.electricity_daily_fixed_cost, 4
         )
 
-        # Monthly electricity
-        kwh_t1_m, kwh_t2_m, kwh_total_m = self._kwh_import_month()
-        kwh_import_m = self._kwh_import_month_total()
-        kwh_export_m = self._kwh_export_month()
-        import_cost_month = self._import_cost(kwh_t1_m, kwh_t2_m, kwh_total_m)
+        # --- Maandkosten stroom ---
         days_in_month = (
             (now.replace(month=now.month % 12 + 1, day=1) - timedelta(days=1)).day
-            if now.month < 12
-            else 31
+            if now.month < 12 else 31
         )
         monthly_fixed = self._fixed_day_electricity * days_in_month
-        if use_saldering:
-            if kwh_export_m <= kwh_import_m:
-                monthly_variable = import_cost_month - kwh_export_m * self._normaal_rate
-            else:
-                monthly_variable = -(kwh_export_m - kwh_import_m) * self._return_rate
-        else:
-            monthly_variable = import_cost_month - (kwh_export_m * self._return_rate)
+        monthly_variable = (
+            (self._kwh_import_month() * self._import_rate)
+            - (self._kwh_export_month() * self._return_rate)
+        )
         self.electricity_monthly_cost = round(monthly_fixed + monthly_variable, 4)
 
-        # --- Salderingsbalans contract jaar ---
-        year_result = self._kwh_import_year()
-        kwh_export_y = self._kwh_export_year()
-        kwh_import_y = self._kwh_import_year_total()
-        self.saldo_import_jaar_kwh = round(kwh_import_y, 2) if kwh_import_y is not None else None
-        self.saldo_export_jaar_kwh = round(kwh_export_y, 2) if kwh_export_y is not None else None
-        if kwh_import_y is not None and kwh_export_y is not None:
-            self.saldo_netto_jaar_kwh = round(kwh_import_y - kwh_export_y, 2)
-        else:
-            self.saldo_netto_jaar_kwh = None
-
-        if year_result is not None and kwh_export_y is not None:
-            kwh_t1_y, kwh_t2_y, kwh_total_y = year_result
-            import_cost_year = self._import_cost(kwh_t1_y, kwh_t2_y, kwh_total_y)
-            if use_saldering:
-                if kwh_export_y <= kwh_import_y:
-                    saldo_var = import_cost_year - kwh_export_y * self._normaal_rate
-                else:
-                    saldo_var = -(kwh_export_y - kwh_import_y) * self._return_rate
-            else:
-                saldo_var = import_cost_year - (kwh_export_y * self._return_rate)
-
-            # Days elapsed since contract year start
-            if self._contract_year_start_dt is not None:
-                days_elapsed = max(1, (now - self._contract_year_start_dt).days)
-            else:
-                days_elapsed = now.timetuple().tm_yday
-            yearly_fixed_ytd = self._fixed_day_electricity * days_elapsed
-            self.saldo_kosten_jaarafrekening = round(saldo_var + yearly_fixed_ytd, 2)
-        else:
-            self.saldo_kosten_jaarafrekening = None
-
         # --- Gas ---
-        gas_tariff = float(self._get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))
-        gas_today = self._gas_today_m3()
-        gas_month = self._gas_month_m3()
-
+        gas_tariff = float(self.config.get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))
         self.gas_daily_cost = round(
-            gas_today * gas_tariff + self._fixed_day_gas, 4
+            self._gas_today_m3() * gas_tariff + self._fixed_day_gas, 4
         )
         self.gas_monthly_cost = round(
-            gas_month * gas_tariff + self._fixed_day_gas * days_in_month, 4
+            self._gas_month_m3() * gas_tariff + self._fixed_day_gas * days_in_month, 4
         )
 
-        # --- Totals ---
+        # --- Totalen ---
         self.total_daily_cost = round(
             self.electricity_daily_total_cost + self.gas_daily_cost, 4
         )
@@ -862,193 +473,13 @@ class NLEnergyCostCoordinator:
             self.electricity_monthly_cost + self.gas_monthly_cost, 4
         )
 
-        self.total_previous_month_cost = round(
-            (self.electricity_previous_month_cost or 0.0)
-            + (self.gas_previous_month_cost or 0.0),
-            4,
-        ) if self.electricity_previous_month_cost is not None or self.gas_previous_month_cost is not None else None
-
-        # Push updates to sensors
         for sensor in self._sensors:
             sensor.async_write_ha_state()
 
-    async def _async_load_previous_month_costs(self) -> None:
-        """Fetch previous month boundary values and compute costs."""
-        now = dt_util.now()
-        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
-        last_month_days = (current_month_start - timedelta(days=1)).day
-
-        entity_ids = [
-            self._get(k)
-            for k in [
-                CONF_IMPORT_T1_KWH,
-                CONF_IMPORT_T2_KWH,
-                CONF_IMPORT_TOTAL_KWH,
-                CONF_EXPORT_T1_KWH,
-                CONF_EXPORT_T2_KWH,
-                CONF_EXPORT_TOTAL_KWH,
-                CONF_GAS_DAILY_M3,
-            ]
-            if self._get(k)
-        ]
-
-        if not entity_ids:
-            self.electricity_previous_month_cost = None
-            self.gas_previous_month_cost = None
-            self.total_previous_month_cost = None
-            return
-
-        try:
-            from homeassistant.components.recorder import get_instance
-            from homeassistant.components.recorder.history import get_significant_states
-
-            recorder = get_instance(self.hass)
-
-            def _query(start_dt: datetime.datetime, end_dt: datetime.datetime) -> dict[str, list[Any]]:
-                return get_significant_states(
-                    start_dt,
-                    end_dt,
-                    entity_ids,
-                    minimal_response=True,
-                    no_attributes=True,
-                )
-
-            start_history = await recorder.async_add_executor_job(
-                _query,
-                last_month_start,
-                last_month_start + timedelta(hours=2),
-            )
-            end_history = await recorder.async_add_executor_job(
-                _query,
-                current_month_start,
-                current_month_start + timedelta(hours=2),
-            )
-
-            def _first_value(history: dict[str, list[Any]], entity_id: str) -> float | None:
-                states = history.get(entity_id)
-                if not states:
-                    return None
-                for state in states:
-                    try:
-                        return float(state.state)
-                    except (ValueError, TypeError):
-                        continue
-                return None
-
-            start_import_t1 = _first_value(start_history, self._get(CONF_IMPORT_T1_KWH))
-            start_import_t2 = _first_value(start_history, self._get(CONF_IMPORT_T2_KWH))
-            start_import_total = _first_value(start_history, self._get(CONF_IMPORT_TOTAL_KWH))
-            start_export_t1 = _first_value(start_history, self._get(CONF_EXPORT_T1_KWH))
-            start_export_t2 = _first_value(start_history, self._get(CONF_EXPORT_T2_KWH))
-            start_export_total = _first_value(start_history, self._get(CONF_EXPORT_TOTAL_KWH))
-            start_gas = _first_value(start_history, self._get(CONF_GAS_DAILY_M3))
-
-            end_import_t1 = _first_value(end_history, self._get(CONF_IMPORT_T1_KWH))
-            end_import_t2 = _first_value(end_history, self._get(CONF_IMPORT_T2_KWH))
-            end_import_total = _first_value(end_history, self._get(CONF_IMPORT_TOTAL_KWH))
-            end_export_t1 = _first_value(end_history, self._get(CONF_EXPORT_T1_KWH))
-            end_export_t2 = _first_value(end_history, self._get(CONF_EXPORT_T2_KWH))
-            end_export_total = _first_value(end_history, self._get(CONF_EXPORT_TOTAL_KWH))
-            end_gas = _first_value(end_history, self._get(CONF_GAS_DAILY_M3))
-
-            def _delta(start: float | None, end: float | None) -> float | None:
-                if start is None or end is None:
-                    return None
-                return max(0.0, end - start)
-
-            if (
-                start_import_t1 is not None
-                and start_import_t2 is not None
-                and end_import_t1 is not None
-                and end_import_t2 is not None
-            ):
-                import_t1 = _delta(start_import_t1, end_import_t1)
-                import_t2 = _delta(start_import_t2, end_import_t2)
-                import_total = None
-            elif start_import_total is not None and end_import_total is not None:
-                import_t1 = 0.0
-                import_t2 = None
-                import_total = _delta(start_import_total, end_import_total)
-            else:
-                import_t1 = 0.0
-                import_t2 = None
-                import_total = None
-
-            if (
-                start_export_t1 is not None
-                and start_export_t2 is not None
-                and end_export_t1 is not None
-                and end_export_t2 is not None
-            ):
-                export_kwh = _delta(
-                    start_export_t1 + start_export_t2,
-                    end_export_t1 + end_export_t2,
-                )
-            elif start_export_total is not None and end_export_total is not None:
-                export_kwh = _delta(start_export_total, end_export_total)
-            else:
-                export_kwh = None
-
-            if start_gas is not None and end_gas is not None:
-                gas_m3 = _delta(start_gas, end_gas)
-            else:
-                gas_m3 = None
-
-            if import_t1 is None and import_total is None:
-                self.electricity_previous_month_cost = None
-            else:
-                import_cost = self._import_cost(import_t1 or 0.0, import_t2, import_total)
-                if self._get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING) and export_kwh is not None:
-                    if export_kwh <= ((import_t1 or 0.0) + (import_t2 or 0.0) if import_t2 is not None else import_total or 0.0):
-                        monthly_variable = import_cost - export_kwh * self._normaal_rate
-                    else:
-                        monthly_variable = -(
-                            export_kwh
-                            - ((import_t1 or 0.0) + (import_t2 or 0.0) if import_t2 is not None else import_total or 0.0)
-                        ) * self._return_rate
-                else:
-                    monthly_variable = import_cost - (export_kwh or 0.0) * self._return_rate
-                self.electricity_previous_month_cost = round(
-                    self._fixed_day_electricity * last_month_days + monthly_variable,
-                    4,
-                )
-
-            if gas_m3 is None:
-                self.gas_previous_month_cost = None
-            else:
-                self.gas_previous_month_cost = round(
-                    gas_m3 * float(self._get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))
-                    + self._fixed_day_gas * last_month_days,
-                    4,
-                )
-
-            if self.electricity_previous_month_cost is not None or self.gas_previous_month_cost is not None:
-                self.total_previous_month_cost = round(
-                    (self.electricity_previous_month_cost or 0.0)
-                    + (self.gas_previous_month_cost or 0.0),
-                    4,
-                )
-            else:
-                self.total_previous_month_cost = None
-
-            return
-        except Exception as err:
-            _LOGGER.debug("WattKost: previous month history lookup failed: %s", err)
-
-        self.electricity_previous_month_cost = None
-        self.gas_previous_month_cost = None
-        self.total_previous_month_cost = None
-
-    async def async_setup(self, sensors: list[NLEnergyCostSensor]) -> None:
+    async def async_setup(self, sensors: list[WattKostSensor]) -> None:
         """Subscribe to state changes for all configured source sensors."""
         self._sensors = sensors
 
-        # Load year-start from storage or recorder
-        await self._async_load_or_fetch_year_start()
-        await self._async_load_previous_month_costs()
-
-        # Collect all configured entity IDs to watch
         watch_keys = [
             CONF_CONSUMPTION_W, CONF_CONSUMPTION_KWH,
             CONF_IMPORT_T1_KWH, CONF_IMPORT_T2_KWH, CONF_IMPORT_TOTAL_KWH, CONF_IMPORT_W,
@@ -1067,30 +498,23 @@ class NLEnergyCostCoordinator:
         if entity_ids:
             async_track_state_change_event(self.hass, entity_ids, _state_changed)
 
-        # Update every 5 minutes for fixed daily cost drift (reduces DB writes)
         @callback
         def _time_update(_now: Any) -> None:
             self.update()
 
-        async_track_time_change(
-            self.hass,
-            _time_update,
-            minute=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-            second=0,
-        )
+        async_track_time_change(self.hass, _time_update, second=0)
 
-        # Initial computation
         self.update()
 
 
-class NLEnergyCostSensor(SensorEntity):
-    """A single computed cost sensor."""
+class WattKostSensor(SensorEntity):
+    """A single computed WattKost sensor."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: NLEnergyCostCoordinator,
+        coordinator: WattKostCoordinator,
         entry_id: str,
         key: str,
         name: str,
@@ -1099,20 +523,18 @@ class NLEnergyCostSensor(SensorEntity):
         device_class: SensorDeviceClass | None,
         state_class: SensorStateClass,
         value_fn,
-        precision: int = 2,
     ) -> None:
         """Initialize sensor."""
         self._coordinator = coordinator
         self._key = key
         self._value_fn = value_fn
-        self._precision = precision
         self._attr_name = name
         self._attr_unique_id = f"{entry_id}_{key}"
         self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon
         self._attr_device_class = device_class
         self._attr_state_class = state_class
-        self._attr_suggested_display_precision = precision
+        self._attr_suggested_display_precision = 4
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -1131,7 +553,7 @@ class NLEnergyCostSensor(SensorEntity):
             val = self._value_fn(self._coordinator)
             if val is None:
                 return None
-            return round(float(val), self._precision)
+            return round(float(val), 4)
         except Exception:  # noqa: BLE001
             return None
 
@@ -1149,16 +571,6 @@ class NLEnergyCostSensor(SensorEntity):
         if self._key == "gas_daily_cost":
             return {
                 "gas_tarief_eur_m3": self._coordinator.config.get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF),
-                "vaste_gaskosten_eur": self._coordinator._fixed_day_gas,
-            }
-        if self._key == "saldo_kosten_jaarafrekening":
-            return {
-                "contract_jaar_start": (
-                    self._coordinator._contract_year_start_dt.date().isoformat()
-                    if self._coordinator._contract_year_start_dt else None
-                ),
-                "saldo_import_kwh": self._coordinator.saldo_import_jaar_kwh,
-                "saldo_export_kwh": self._coordinator.saldo_export_jaar_kwh,
-                "saldo_netto_kwh": self._coordinator.saldo_netto_jaar_kwh,
+                "vaste_gaskosten_eur_dag": self._coordinator._fixed_day_gas,
             }
         return {}
