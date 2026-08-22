@@ -35,8 +35,7 @@ from .const import (
     CONF_SOLAR_KWH,
     CONF_SOLAR_W,
     CONF_GAS_DAILY_M3,
-    CONF_USE_SINGLE_TARIFF,
-    CONF_TARIFF_ENKEL,
+    CONF_USE_SALDERING,
     CONF_TARIFF_NORMAAL,
     CONF_TARIFF_DAL,
     CONF_TARIFF_RETURN,
@@ -47,15 +46,14 @@ from .const import (
     CONF_GAS_TARIFF,
     CONF_FIXED_DELIVERY_DAY_GAS,
     CONF_SYSTEM_OPERATOR_DAY_GAS,
-    DEFAULT_TARIFF_ENKEL,
+    DEFAULT_USE_SALDERING,
     DEFAULT_TARIFF_NORMAAL,
     DEFAULT_TARIFF_DAL,
     DEFAULT_TARIFF_RETURN,
     DEFAULT_TARIFF_RETURN_COST,
-    DEFAULT_USE_SINGLE_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY,
     DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY,
-    DEFAULT_ENERGY_REDUCTION_YEAR,
+    DEFAULT_ENERGY_REDUCTION_DAY,
     DEFAULT_GAS_TARIFF,
     DEFAULT_FIXED_DELIVERY_DAY_GAS,
     DEFAULT_SYSTEM_OPERATOR_DAY_GAS,
@@ -67,7 +65,6 @@ DAYS_PER_YEAR = 365.2425
 
 
 def _safe_float(hass: HomeAssistant, entity_id: str | None) -> float | None:
-    """Safely retrieve float state of an entity."""
     if not entity_id:
         return None
     state = hass.states.get(entity_id)
@@ -84,157 +81,58 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up WattKost sensors from config entry."""
     config = {**entry.data, **entry.options}
     coordinator = WattKostCoordinator(hass, config, entry.entry_id)
 
     sensors = [
-        # --- Actueel ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_current_cost_eur_h",
-            name="Stroom actuele kosten",
-            unit="€/h",
-            icon="mdi:lightning-bolt",
-            device_class=None,
-            # MEASUREMENT: kan negatief zijn bij netto teruglevering
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_current_cost_eur_h,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_import_rate",
-            name="Stroom actueel importtarief",
-            unit="€/kWh",
-            icon="mdi:cash-minus",
-            device_class=None,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.current_import_rate,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_export_rate",
-            name="Stroom actueel teruglevertarief",
-            unit="€/kWh",
-            icon="mdi:cash-plus",
-            device_class=None,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.current_export_rate,
-        ),
-        # --- Dagkosten stroom ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_daily_variable_cost",
-            name="Stroom variabele dagkosten",
-            unit="€",
-            icon="mdi:lightning-bolt",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: negatief mogelijk bij veel teruglevering
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_daily_variable_cost,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_daily_fixed_cost",
-            name="Stroom vaste dagkosten",
-            unit="€",
-            icon="mdi:calendar-today",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: stabiel bedrag, geen cumulatief
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_daily_fixed_cost,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_daily_total_cost",
-            name="Stroom totale dagkosten",
-            unit="€",
-            icon="mdi:lightning-bolt",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: negatief mogelijk op zonnige dag met veel teruglevering
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_daily_total_cost,
-        ),
-        # --- Maandkosten stroom ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_monthly_cost",
-            name="Stroom maandkosten",
-            unit="€",
-            icon="mdi:lightning-bolt",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: kan negatief zijn in zonnige maand
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.electricity_monthly_cost,
-        ),
-        # --- kWh netto ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="electricity_net_daily_kwh",
-            name="Stroom netto dag kWh",
-            unit="kWh",
-            icon="mdi:transmission-tower",
-            device_class=SensorDeviceClass.ENERGY,
-            # MEASUREMENT: negatief bij netto teruglevering
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.net_daily_kwh,
-        ),
-        # --- Gas ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="gas_daily_cost",
-            name="Gas dagkosten",
-            unit="€",
-            icon="mdi:gas-burner",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: kan dalen als dagstart-snapshot verschuift
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.gas_daily_cost,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="gas_monthly_cost",
-            name="Gas maandkosten",
-            unit="€",
-            icon="mdi:gas-burner",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.gas_monthly_cost,
-        ),
-        # --- Totalen ---
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="total_daily_cost",
-            name="Totale dagkosten energie",
-            unit="€",
-            icon="mdi:cash",
-            device_class=SensorDeviceClass.MONETARY,
-            # MEASUREMENT: negatief mogelijk op zonnige dag
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.total_daily_cost,
-        ),
-        WattKostSensor(
-            coordinator=coordinator,
-            entry_id=entry.entry_id,
-            key="total_monthly_cost",
-            name="Totale maandkosten energie",
-            unit="€",
-            icon="mdi:cash",
-            device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
-            value_fn=lambda c: c.total_monthly_cost,
-        ),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_current_cost_eur_h",
+            "Stroom actuele kosten", "euro_per_h", "mdi:lightning-bolt",
+            None, SensorStateClass.MEASUREMENT,
+            lambda c: c.electricity_current_cost_eur_h),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_import_rate",
+            "Stroom actueel importtarief", "EUR/kWh", "mdi:cash-minus",
+            None, SensorStateClass.MEASUREMENT,
+            lambda c: c.current_import_rate),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_export_rate",
+            "Stroom actueel teruglevertarief", "EUR/kWh", "mdi:cash-plus",
+            None, SensorStateClass.MEASUREMENT,
+            lambda c: c.current_export_rate),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_daily_variable_cost",
+            "Stroom variabele dagkosten", "EUR", "mdi:lightning-bolt",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.electricity_daily_variable_cost),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_daily_fixed_cost",
+            "Stroom vaste dagkosten", "EUR", "mdi:calendar-today",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.electricity_daily_fixed_cost),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_daily_total_cost",
+            "Stroom totale dagkosten", "EUR", "mdi:lightning-bolt",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.electricity_daily_total_cost),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_monthly_cost",
+            "Stroom maandkosten", "EUR", "mdi:lightning-bolt",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.electricity_monthly_cost),
+        WattKostSensor(coordinator, entry.entry_id, "electricity_net_daily_kwh",
+            "Stroom netto dag kWh", "kWh", "mdi:transmission-tower",
+            SensorDeviceClass.ENERGY, SensorStateClass.MEASUREMENT,
+            lambda c: c.net_daily_kwh),
+        WattKostSensor(coordinator, entry.entry_id, "gas_daily_cost",
+            "Gas dagkosten", "EUR", "mdi:gas-burner",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.gas_daily_cost),
+        WattKostSensor(coordinator, entry.entry_id, "gas_monthly_cost",
+            "Gas maandkosten", "EUR", "mdi:gas-burner",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.gas_monthly_cost),
+        WattKostSensor(coordinator, entry.entry_id, "total_daily_cost",
+            "Totale dagkosten energie", "EUR", "mdi:cash",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.total_daily_cost),
+        WattKostSensor(coordinator, entry.entry_id, "total_monthly_cost",
+            "Totale maandkosten energie", "EUR", "mdi:cash",
+            SensorDeviceClass.MONETARY, SensorStateClass.MEASUREMENT,
+            lambda c: c.total_monthly_cost),
     ]
 
     async_add_entities(sensors)
@@ -242,33 +140,24 @@ async def async_setup_entry(
 
 
 class WattKostCoordinator:
-    """Central coordinator that tracks all state and computes costs."""
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        config: dict[str, Any],
-        entry_id: str,
-    ) -> None:
-        """Initialize coordinator."""
+    def __init__(self, hass: HomeAssistant, config: dict[str, Any], entry_id: str) -> None:
         self.hass = hass
         self.config = config
         self.entry_id = entry_id
         self._sensors: list[WattKostSensor] = []
 
-        # Day tracking
         self._current_day: date = dt_util.now().date()
+        self._current_month: int = dt_util.now().month
+
         self._day_start_import_t1: float | None = None
         self._day_start_import_t2: float | None = None
         self._day_start_export_t1: float | None = None
         self._day_start_export_t2: float | None = None
-        self._day_start_solar: float | None = None
         self._day_start_import_total: float | None = None
         self._day_start_export_total: float | None = None
         self._day_start_gas: float | None = None
 
-        # Month tracking
-        self._current_month: int = dt_util.now().month
         self._month_start_import_t1: float | None = None
         self._month_start_import_t2: float | None = None
         self._month_start_export_t1: float | None = None
@@ -277,7 +166,6 @@ class WattKostCoordinator:
         self._month_start_export_total: float | None = None
         self._month_start_gas: float | None = None
 
-        # Computed values — all can be None or negative
         self.electricity_current_cost_eur_h: float | None = None
         self.current_import_rate: float | None = None
         self.current_export_rate: float | None = None
@@ -293,14 +181,14 @@ class WattKostCoordinator:
 
     @property
     def _import_rate(self) -> float:
-        use_single = self.config.get(CONF_USE_SINGLE_TARIFF, DEFAULT_USE_SINGLE_TARIFF)
-        if use_single:
-            return float(self.config.get(CONF_TARIFF_ENKEL, DEFAULT_TARIFF_ENKEL))
         return float(self.config.get(CONF_TARIFF_NORMAAL, DEFAULT_TARIFF_NORMAAL))
 
     @property
     def _return_rate(self) -> float:
-        """Net credit per kWh teruggeleverd (vergoeding incl BTW - kosten)."""
+        use_saldering = self.config.get(CONF_USE_SALDERING, DEFAULT_USE_SALDERING)
+        if not use_saldering:
+            cost = float(self.config.get(CONF_TARIFF_RETURN_COST, DEFAULT_TARIFF_RETURN_COST))
+            return -cost
         credit = float(self.config.get(CONF_TARIFF_RETURN, DEFAULT_TARIFF_RETURN)) * 1.21
         cost = float(self.config.get(CONF_TARIFF_RETURN_COST, DEFAULT_TARIFF_RETURN_COST))
         return credit - cost
@@ -309,8 +197,8 @@ class WattKostCoordinator:
     def _fixed_day_electricity(self) -> float:
         fixed = float(self.config.get(CONF_FIXED_DELIVERY_DAY_ELECTRICITY, DEFAULT_FIXED_DELIVERY_DAY_ELECTRICITY))
         system = float(self.config.get(CONF_SYSTEM_OPERATOR_DAY_ELECTRICITY, DEFAULT_SYSTEM_OPERATOR_DAY_ELECTRICITY))
-        reduction_day = float(self.config.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_YEAR)) / DAYS_PER_YEAR
-        return fixed + system + reduction_day
+        reduction = float(self.config.get(CONF_ENERGY_REDUCTION_YEAR, DEFAULT_ENERGY_REDUCTION_DAY * DAYS_PER_YEAR)) / DAYS_PER_YEAR
+        return fixed + system + reduction
 
     @property
     def _fixed_day_gas(self) -> float:
@@ -375,7 +263,6 @@ class WattKostCoordinator:
         self._day_start_import_t2 = _safe_float(self.hass, self.config.get(CONF_IMPORT_T2_KWH))
         self._day_start_export_t1 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T1_KWH))
         self._day_start_export_t2 = _safe_float(self.hass, self.config.get(CONF_EXPORT_T2_KWH))
-        self._day_start_solar = _safe_float(self.hass, self.config.get(CONF_SOLAR_KWH))
         self._day_start_import_total = _safe_float(self.hass, self.config.get(CONF_IMPORT_TOTAL_KWH))
         self._day_start_export_total = _safe_float(self.hass, self.config.get(CONF_EXPORT_TOTAL_KWH))
         self._day_start_gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
@@ -390,31 +277,25 @@ class WattKostCoordinator:
         self._month_start_gas = _safe_float(self.hass, self.config.get(CONF_GAS_DAILY_M3))
 
     def update(self) -> None:
-        """Recompute all cost sensors."""
         now = dt_util.now()
         today = now.date()
 
-        # Day rollover
         if today != self._current_day:
             self._snapshot_day_start()
             self._current_day = today
 
-        # Month rollover
         if now.month != self._current_month:
             self._snapshot_month_start()
             self._current_month = now.month
 
-        # Initialize baselines on first run
         if self._day_start_import_t1 is None and self._day_start_import_total is None:
             self._snapshot_day_start()
         if self._month_start_import_t1 is None and self._month_start_import_total is None:
             self._snapshot_month_start()
 
-        # --- Actueel importtarief & teruglevertarief ---
         self.current_import_rate = self._import_rate
         self.current_export_rate = self._return_rate
 
-        # --- Actuele kosten (€/h) ---
         import_w = _safe_float(self.hass, self.config.get(CONF_IMPORT_W))
         export_w = _safe_float(self.hass, self.config.get(CONF_EXPORT_W))
 
@@ -426,70 +307,35 @@ class WattKostCoordinator:
         else:
             self.electricity_current_cost_eur_h = None
 
-        # --- Dagkosten stroom ---
         kwh_import = self._kwh_import_today()
         kwh_export = self._kwh_export_today()
-
-        # Variabele kosten: negatief = je hebt meer terugeleverd dan geïmporteerd → credit
-        import_cost = kwh_import * self._import_rate
-        export_credit = kwh_export * self._return_rate
-        self.electricity_daily_variable_cost = round(import_cost - export_credit, 4)
+        self.electricity_daily_variable_cost = round(kwh_import * self._import_rate - kwh_export * self._return_rate, 4)
         self.net_daily_kwh = round(kwh_import - kwh_export, 4)
-
-        # Vaste kosten: altijd positief
         self.electricity_daily_fixed_cost = round(self._fixed_day_electricity, 4)
+        self.electricity_daily_total_cost = round(self.electricity_daily_variable_cost + self.electricity_daily_fixed_cost, 4)
 
-        # Totaal dagkosten: kan negatief zijn bij veel teruglevering
-        self.electricity_daily_total_cost = round(
-            self.electricity_daily_variable_cost + self.electricity_daily_fixed_cost, 4
-        )
+        days_in_month = (now.replace(month=now.month % 12 + 1, day=1) - timedelta(days=1)).day if now.month < 12 else 31
+        self.electricity_monthly_cost = round(
+            self._kwh_import_month() * self._import_rate - self._kwh_export_month() * self._return_rate + self._fixed_day_electricity * days_in_month, 4)
 
-        # --- Maandkosten stroom ---
-        days_in_month = (
-            (now.replace(month=now.month % 12 + 1, day=1) - timedelta(days=1)).day
-            if now.month < 12 else 31
-        )
-        monthly_fixed = self._fixed_day_electricity * days_in_month
-        monthly_variable = (
-            (self._kwh_import_month() * self._import_rate)
-            - (self._kwh_export_month() * self._return_rate)
-        )
-        self.electricity_monthly_cost = round(monthly_fixed + monthly_variable, 4)
-
-        # --- Gas ---
         gas_tariff = float(self.config.get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF))
-        self.gas_daily_cost = round(
-            self._gas_today_m3() * gas_tariff + self._fixed_day_gas, 4
-        )
-        self.gas_monthly_cost = round(
-            self._gas_month_m3() * gas_tariff + self._fixed_day_gas * days_in_month, 4
-        )
-
-        # --- Totalen ---
-        self.total_daily_cost = round(
-            self.electricity_daily_total_cost + self.gas_daily_cost, 4
-        )
-        self.total_monthly_cost = round(
-            self.electricity_monthly_cost + self.gas_monthly_cost, 4
-        )
+        self.gas_daily_cost = round(self._gas_today_m3() * gas_tariff + self._fixed_day_gas, 4)
+        self.gas_monthly_cost = round(self._gas_month_m3() * gas_tariff + self._fixed_day_gas * days_in_month, 4)
+        self.total_daily_cost = round(self.electricity_daily_total_cost + self.gas_daily_cost, 4)
+        self.total_monthly_cost = round(self.electricity_monthly_cost + self.gas_monthly_cost, 4)
 
         for sensor in self._sensors:
             sensor.async_write_ha_state()
 
-    async def async_setup(self, sensors: list[WattKostSensor]) -> None:
-        """Subscribe to state changes for all configured source sensors."""
+    async def async_setup(self, sensors: list) -> None:
         self._sensors = sensors
-
         watch_keys = [
             CONF_CONSUMPTION_W, CONF_CONSUMPTION_KWH,
             CONF_IMPORT_T1_KWH, CONF_IMPORT_T2_KWH, CONF_IMPORT_TOTAL_KWH, CONF_IMPORT_W,
             CONF_EXPORT_T1_KWH, CONF_EXPORT_T2_KWH, CONF_EXPORT_TOTAL_KWH, CONF_EXPORT_W,
-            CONF_SOLAR_KWH, CONF_SOLAR_W,
-            CONF_GAS_DAILY_M3,
+            CONF_SOLAR_KWH, CONF_SOLAR_W, CONF_GAS_DAILY_M3,
         ]
-        entity_ids = [
-            self.config[k] for k in watch_keys if k in self.config and self.config[k]
-        ]
+        entity_ids = [self.config[k] for k in watch_keys if k in self.config and self.config[k]]
 
         @callback
         def _state_changed(_event: Any) -> None:
@@ -503,28 +349,13 @@ class WattKostCoordinator:
             self.update()
 
         async_track_time_change(self.hass, _time_update, second=0)
-
         self.update()
 
 
 class WattKostSensor(SensorEntity):
-    """A single computed WattKost sensor."""
-
     _attr_has_entity_name = True
 
-    def __init__(
-        self,
-        coordinator: WattKostCoordinator,
-        entry_id: str,
-        key: str,
-        name: str,
-        unit: str,
-        icon: str,
-        device_class: SensorDeviceClass | None,
-        state_class: SensorStateClass,
-        value_fn,
-    ) -> None:
-        """Initialize sensor."""
+    def __init__(self, coordinator, entry_id, key, name, unit, icon, device_class, state_class, value_fn) -> None:
         self._coordinator = coordinator
         self._key = key
         self._value_fn = value_fn
@@ -538,7 +369,6 @@ class WattKostSensor(SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return device info."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._coordinator.entry_id)},
             name="WattKost",
@@ -548,18 +378,14 @@ class WattKostSensor(SensorEntity):
 
     @property
     def native_value(self) -> float | None:
-        """Return computed sensor value."""
         try:
             val = self._value_fn(self._coordinator)
-            if val is None:
-                return None
-            return round(float(val), 4)
-        except Exception:  # noqa: BLE001
+            return round(float(val), 4) if val is not None else None
+        except Exception:
             return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return extra diagnostic attributes."""
         if self._key == "electricity_daily_total_cost":
             return {
                 "variabele_kosten_eur": self._coordinator.electricity_daily_variable_cost,
@@ -568,9 +394,5 @@ class WattKostSensor(SensorEntity):
                 "import_tarief_eur_kwh": self._coordinator.current_import_rate,
                 "teruglever_tarief_eur_kwh": self._coordinator.current_export_rate,
             }
-        if self._key == "gas_daily_cost":
-            return {
-                "gas_tarief_eur_m3": self._coordinator.config.get(CONF_GAS_TARIFF, DEFAULT_GAS_TARIFF),
-                "vaste_gaskosten_eur_dag": self._coordinator._fixed_day_gas,
-            }
         return {}
+
