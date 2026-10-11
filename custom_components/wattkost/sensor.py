@@ -136,8 +136,9 @@ async def async_setup_entry(
             unit="kWh",
             icon="mdi:scale-balance",
             device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.MEASUREMENT,
+            state_class=SensorStateClass.TOTAL,
             value_fn=lambda c: c.saldo_netto_jaar_kwh,
+            last_reset_fn=lambda c: c._contract_year_start_dt,
             precision=2,
         ),
         NLEnergyCostSensor(
@@ -208,7 +209,7 @@ async def async_setup_entry(
             unit="€",
             icon="mdi:calendar-today",
             device_class=SensorDeviceClass.MONETARY,
-            state_class=SensorStateClass.MEASUREMENT,
+            state_class=None,
             value_fn=lambda c: c.electricity_daily_fixed_cost,
             precision=2,
         ),
@@ -244,8 +245,9 @@ async def async_setup_entry(
             unit="kWh",
             icon="mdi:transmission-tower",
             device_class=SensorDeviceClass.ENERGY,
-            state_class=SensorStateClass.MEASUREMENT,
+            state_class=SensorStateClass.TOTAL,
             value_fn=lambda c: c.net_daily_kwh,
+            last_reset_fn=lambda c: dt_util.start_of_local_day(),
             precision=2,
         ),
         NLEnergyCostSensor(
@@ -1097,14 +1099,16 @@ class NLEnergyCostSensor(SensorEntity):
         unit: str,
         icon: str,
         device_class: SensorDeviceClass | None,
-        state_class: SensorStateClass,
+        state_class: SensorStateClass | None,
         value_fn,
         precision: int = 2,
+        last_reset_fn=None,
     ) -> None:
         """Initialize sensor."""
         self._coordinator = coordinator
         self._key = key
         self._value_fn = value_fn
+        self._last_reset_fn = last_reset_fn
         self._precision = precision
         self._attr_name = name
         self._attr_unique_id = f"{entry_id}_{key}"
@@ -1123,6 +1127,16 @@ class NLEnergyCostSensor(SensorEntity):
             manufacturer="WattKost",
             model="Energie Kostenberekening NL",
         )
+
+    @property
+    def last_reset(self) -> datetime.datetime | None:
+        """Return start of the current meter cycle for TOTAL sensors that reset."""
+        if self._last_reset_fn is None:
+            return None
+        try:
+            return self._last_reset_fn(self._coordinator)
+        except Exception:  # noqa: BLE001
+            return None
 
     @property
     def native_value(self) -> float | None:
