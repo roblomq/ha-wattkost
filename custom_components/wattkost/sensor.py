@@ -681,6 +681,22 @@ class NLEnergyCostCoordinator:
 
             recorder = get_instance(self.hass)
 
+            # Long-term statistics first (`state` = meter reading at year start)
+            stat_values = await self._async_statistic_values(entity_ids, start_dt, "state")
+            found_any = False
+            for conf_key, attr in sensor_map.items():
+                entity_id = self._get(conf_key)
+                if entity_id and entity_id in stat_values:
+                    setattr(self, attr, stat_values[entity_id])
+                    found_any = True
+                    _LOGGER.debug(
+                        "WattKost: jaar-start %s = %.3f (via statistieken)",
+                        entity_id, stat_values[entity_id],
+                    )
+            if found_any:
+                await self._async_save_year_start()
+                return
+
             def _query():
                 return get_significant_states(
                     start_dt,
@@ -692,7 +708,6 @@ class NLEnergyCostCoordinator:
 
             history = await recorder.async_add_executor_job(_query)
 
-            found_any = False
             for conf_key, attr in sensor_map.items():
                 entity_id = self._get(conf_key)
                 if not entity_id or entity_id not in history:
@@ -874,6 +889,43 @@ class NLEnergyCostCoordinator:
         for sensor in self._sensors:
             sensor.async_write_ha_state()
 
+    async def _async_statistic_values(
+        self, entity_ids: list[str], at_dt: datetime.datetime, field: str
+    ) -> dict[str, float]:
+        """Return a long-term statistics value per entity at (about) at_dt.
+
+        Uses the hourly row that ends at at_dt, so `state` is the meter reading
+        at that moment and `sum` is the reset-proof running total. Long-term
+        statistics are not purged, unlike the normal recorder history.
+        """
+        if not entity_ids:
+            return {}
+        from homeassistant.components.recorder import get_instance
+        from homeassistant.components.recorder.statistics import statistics_during_period
+
+        at_utc = dt_util.as_utc(at_dt)
+
+        def _query() -> dict[str, list[Any]]:
+            return statistics_during_period(
+                self.hass,
+                at_utc - timedelta(hours=1),
+                at_utc + timedelta(hours=2),
+                set(entity_ids),
+                "hour",
+                None,
+                {field},
+            )
+
+        stats = await get_instance(self.hass).async_add_executor_job(_query)
+        result: dict[str, float] = {}
+        for entity_id, rows in stats.items():
+            for row in rows:
+                val = row.get(field)
+                if val is not None:
+                    result[entity_id] = float(val)
+                    break
+        return result
+
     async def _async_load_previous_month_costs(self) -> None:
         """Fetch previous month boundary values and compute costs."""
         now = dt_util.now()
@@ -916,18 +968,31 @@ class NLEnergyCostCoordinator:
                     no_attributes=True,
                 )
 
-            start_history = await recorder.async_add_executor_job(
-                _query,
-                last_month_start,
-                last_month_start + timedelta(hours=2),
-            )
-            end_history = await recorder.async_add_executor_job(
-                _query,
-                current_month_start,
-                current_month_start + timedelta(hours=2),
-            )
+            # Long-term statistics (`sum`) first: never purged and reset-proof.
+            # Only differences are used below, so sums work as readings.
+            start_stats = await self._async_statistic_values(entity_ids, last_month_start, "sum")
+            end_stats = await self._async_statistic_values(entity_ids, current_month_start, "sum")
 
-            def _first_value(history: dict[str, list[Any]], entity_id: str) -> float | None:
+            # Fallback for entities without statistics: regular history
+            # (only available within the recorder purge window).
+            missing = [
+                e for e in entity_ids if e not in start_stats or e not in end_stats
+            ]
+            start_history: dict[str, list[Any]] = {}
+            end_history: dict[str, list[Any]] = {}
+            if missing:
+                start_history = await recorder.async_add_executor_job(
+                    _query,
+                    last_month_start,
+                    last_month_start + timedelta(hours=2),
+                )
+                end_history = await recorder.async_add_executor_job(
+                    _query,
+                    current_month_start,
+                    current_month_start + timedelta(hours=2),
+                )
+
+            def _history_value(history: dict[str, list[Any]], entity_id: str) -> float | None:
                 states = history.get(entity_id)
                 if not states:
                     return None
@@ -937,6 +1002,14 @@ class NLEnergyCostCoordinator:
                     except (ValueError, TypeError):
                         continue
                 return None
+
+            def _first_value(history: dict[str, list[Any]], entity_id: str) -> float | None:
+                if not entity_id:
+                    return None
+                stats = start_stats if history is start_history else end_stats
+                if entity_id in start_stats and entity_id in end_stats:
+                    return stats[entity_id]
+                return _history_value(history, entity_id)
 
             start_import_t1 = _first_value(start_history, self._get(CONF_IMPORT_T1_KWH))
             start_import_t2 = _first_value(start_history, self._get(CONF_IMPORT_T2_KWH))
