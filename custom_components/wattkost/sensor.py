@@ -337,7 +337,7 @@ async def async_setup_entry(
     ]
 
     async_add_entities(sensors)
-    await coordinator.async_setup(sensors)
+    coordinator.async_setup(sensors, entry)
 
 
 class NLEnergyCostCoordinator:
@@ -1042,13 +1042,10 @@ class NLEnergyCostCoordinator:
         self.gas_previous_month_cost = None
         self.total_previous_month_cost = None
 
-    async def async_setup(self, sensors: list[NLEnergyCostSensor]) -> None:
-        """Subscribe to state changes for all configured source sensors."""
+    @callback
+    def async_setup(self, sensors: list[NLEnergyCostSensor], entry: ConfigEntry) -> None:
+        """Subscribe to state changes and load history in the background."""
         self._sensors = sensors
-
-        # Load year-start from storage or recorder
-        await self._async_load_or_fetch_year_start()
-        await self._async_load_previous_month_costs()
 
         # Collect all configured entity IDs to watch
         watch_keys = [
@@ -1067,21 +1064,39 @@ class NLEnergyCostCoordinator:
             self.update()
 
         if entity_ids:
-            async_track_state_change_event(self.hass, entity_ids, _state_changed)
+            entry.async_on_unload(
+                async_track_state_change_event(self.hass, entity_ids, _state_changed)
+            )
 
         # Update every 5 minutes for fixed daily cost drift (reduces DB writes)
         @callback
         def _time_update(_now: Any) -> None:
             self.update()
 
-        async_track_time_change(
-            self.hass,
-            _time_update,
-            minute=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
-            second=0,
+        entry.async_on_unload(
+            async_track_time_change(
+                self.hass,
+                _time_update,
+                minute=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+                second=0,
+            )
         )
 
         # Initial computation
+        self.update()
+
+        # Recorder lookups can take a while on large databases; do them in the
+        # background so platform setup is not blocked (cancelled on unload).
+        entry.async_create_background_task(
+            self.hass,
+            self._async_load_history(),
+            f"wattkost_load_history_{entry.entry_id}",
+        )
+
+    async def _async_load_history(self) -> None:
+        """Load year-start and previous-month values, then recompute."""
+        await self._async_load_or_fetch_year_start()
+        await self._async_load_previous_month_costs()
         self.update()
 
 
